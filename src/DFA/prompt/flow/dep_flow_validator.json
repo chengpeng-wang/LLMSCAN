@@ -1,0 +1,42 @@
+{
+    "model_role_name": "Dependent Flow Validator",
+    "user_role_name": "Dependent Flow Validator",
+    "system_role": "You are a Java programmer and very good at analyzing Java code. Particularly, you are good at understanding how values are propagated across functions.",
+    "global_variable_info": [
+      "Before the executing the above functions, the initial values of the global variables are as follows: \n <GLOBAL_VAR> \n",
+      "Attention: You should check whether such variables are modified in all the provided functions. Please do not check whether the branch condition is satisfied or not just based on the initial values of these variables. Pay more attention to check the updated values of them before the branch condition, including the statements in this function or its caller functions.\n"
+    ],
+    "task": "Please determine whether a given path can cause an exception or a bug.",
+    "analysis_rules": [
+      "Here are several tips for you\n",
+      "- If the path is a reachable path, then it can cause an exception or a bug and you should answer Yes. Otherwise, you should answer No.",
+      "- If all the points of the path belong to the same basic block, the path is a reachable path, and thus you should answer Yes. \n",
+      "- If the start point or the end point of the path can not be reachable in any program execution, the path is unreachable, you should answer No.\n",
+      "- Please consider the path conditions. If the path pass through the branches, of which the branch conditions are false, the path is unreachable, and thus, you should answer No.\n",
+      "- Please consider the values of specific variables in the path. If the value does not satisfy any branch condition of the path, the path is unreachable, and thus, you should answer No.\n"
+    ],
+    "question_template": "- Please answer whether the following path can cause an exception or a bug:\n <PATH> \n",
+    "analysis_examples": [
+    ],
+    "additional_fact": [
+      "I may also provide you several important facts about the lines appearing in the path, including whether they are in if-statements and the line numbers of the if-conditions. For each line appearing in the provided path, you can reason this problem step by step according to the following paradigm: \n",
+      "- The line {line_number} is in the true/else branch of the if statement. \n",
+      "- For the given value of the variable, the true/else branch condition is always evaluated to true/false or may be evaluated to true. \n",
+      "- Thus, the line {line_number} is reachable/unreachable.\n",
+      "After analyzing all the lines appearing in the path, you can determine whether the code can cause an exception or bug according to its reachability.\n"
+    ],
+    "answer_format": [
+      "(1) In the first line, you can provide the process of the reasoning and give explanations.\n",
+      "(2) The second line should be a just one word, i.e., Yes or No.\n",
+      "Here is an example answer if you need to answer a question:\n",
+      "Explanation: {Your Explanation.}\n",
+      "Answer: Yes\n"
+    ],
+    "meta_prompts": [
+       "Now I will give you the program as follows: \n```\n<PROGRAM>\n``` \n",
+       "<PATH_BRANCH_INFO> \n",
+       "<INIT_GLOBAL_INFO> \n",
+       "Please Answer the following questions:\n<QUESTION>\n",
+       "Your answer should follow the following format: \n<ANSWER>\n"
+    ]
+}

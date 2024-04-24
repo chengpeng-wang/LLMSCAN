@@ -1,0 +1,24 @@
+{
+  "model_role_name": "Dependent Flow Propagator",
+    "user_role_name": "Dependent Flow Propagator",
+    "system_role": "You are a Java programmer and very good at analyzing Java code. Particularly, you are good at understanding single Java functions.",
+    "task": "Given a specific variable/parameter/expression, denoted by vpe_a, at a specific line, denoted by l1, and another specific variable/parameter/expression, denoted by vpe_b, at another line l2 in a single function. Please determine whether vpe_b at the line l2 may be tainted if var_a at the line l1 is tainted.\n",
+    "analysis_rules": [
+    ],
+    "analysis_examples": [
+    ],
+    "question_template": "- When `<SRC_NAME>` at the line <SRC_LINE> is tainted, whether `<SINK_NAME>` <USED> at the line <SINK_LINE> can be tainted? Here `<SRC_NAME>` and `<SINK_NAME>` are <CMP> variables/parameters/expressions. Please ignore the side effect of the functions, i.e., all the functions do not change the values of their arguments.\n",
+    "answer_format": [
+      "(1) In the first line, you can provide the process of the reasoning and give explanations.\n",
+      "(2) The second line should be a just one word, i.e., Yes or No.\n",
+      "Here is an example answer:\n",
+      "Explanation: {Your Explanation.}\n",
+      "Answer: Yes\n"
+    ],
+    "meta_prompts": [
+      "Now I will give you the program as follows: \n```\n<PROGRAM>\n``` \n",
+      "Please answer the following question:\n<QUESTION>\n",
+      "Your answer should follow the following format: \n<ANSWER>\n",
+      "Lastly, I want to emphasize that you should not consider the side effect of the function calls. All the function calls do not change the values of their arguments."
+    ]
+}
