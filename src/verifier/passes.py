@@ -43,8 +43,8 @@ class Passes:
         sink_syntactic_types = ts_analyzer.collect_syntactic_types(sink_list)
 
         with open(
-                Path(__file__).resolve().parent.parent / "prompt" / self.spec_file_name,
-                "r",
+            Path(__file__).resolve().parent.parent / "prompt" / self.spec_file_name,
+            "r",
         ) as read_file:
             spec = json.load(read_file)
         example_strs = spec["analysis_examples"]
@@ -59,17 +59,22 @@ class Passes:
         debug_print("example_sink_syntactic_types: ", example_sink_syntactic_types)
 
         if (
-                example_src_syntactic_types.isdisjoint(src_syntactic_types)
-                # and len(src_syntactic_types) > 0
+            example_src_syntactic_types.isdisjoint(src_syntactic_types)
+            # and len(src_syntactic_types) > 0
         ) or (
-                example_sink_syntactic_types.isdisjoint(sink_syntactic_types)
-                # and len(sink_syntactic_types) > 0
+            example_sink_syntactic_types.isdisjoint(sink_syntactic_types)
+            # and len(sink_syntactic_types) > 0
         ):
             return False
         return True
 
     # Neural Analysis
-    def function_check(self, ts_analyzer: TSAnalyzer, trace: List[Tuple[int, str]], is_measure_token_cost: bool = False):
+    def function_check(
+        self,
+        ts_analyzer: TSAnalyzer,
+        trace: List[Tuple[int, str]],
+        is_measure_token_cost: bool = False,
+    ):
         debug_print("Start function check")
 
         output_results = {
@@ -93,7 +98,7 @@ class Passes:
         (sink_line_number, sink_name) = trace[-1]
 
         with open(
-                Path(__file__).resolve().parent.parent / "prompt" / self.spec_file_name, "r"
+            Path(__file__).resolve().parent.parent / "prompt" / self.spec_file_name, "r"
         ) as read_file:
             spec = json.load(read_file)
 
@@ -119,7 +124,9 @@ class Passes:
             .replace("<SRC_SYMBOL>", src_name)
         )
 
-        output, input_token_cost, output_token_cost = self.model.infer(message, is_measure_token_cost)
+        output, input_token_cost, output_token_cost = self.model.infer(
+            message, is_measure_token_cost
+        )
 
         debug_print("Checking the first function")
         debug_print("message: \n", message)
@@ -127,7 +134,9 @@ class Passes:
 
         is_source = self.get_yes_or_no(output)
         output_results["src code"] = add_line_numbers(source_function.function_code)
-        output_results["all program size"] += len(source_function.function_code.split("\n"))
+        output_results["all program size"] += len(
+            source_function.function_code.split("\n")
+        )
         output_results["src response"] = output
         output_results["is_src"] = is_source
         output_results["input_token_cost"] += input_token_cost
@@ -160,7 +169,9 @@ class Passes:
             .replace("<SINK_SYMBOL>", sink_name)
         )
 
-        output, input_token_cost, output_token_cost = self.model.infer(message, is_measure_token_cost)
+        output, input_token_cost, output_token_cost = self.model.infer(
+            message, is_measure_token_cost
+        )
         output_results["input_token_cost"] += input_token_cost
         output_results["output_token_cost"] += output_token_cost
 
@@ -168,11 +179,16 @@ class Passes:
         debug_print("message: \n", message)
         debug_print("output: ", output)
 
-        if "no" in output.split("\n")[-1].lower() and "yes" not in output.split("\n")[-1].lower():
+        if (
+            "no" in output.split("\n")[-1].lower()
+            and "yes" not in output.split("\n")[-1].lower()
+        ):
             is_sink = False
 
         output_results["sink code"] = add_line_numbers(source_function.function_code)
-        output_results["all program size"] += len(sink_function.function_code.split("\n"))
+        output_results["all program size"] += len(
+            sink_function.function_code.split("\n")
+        )
         output_results["sink response"] = output
         output_results["is_sink"] = is_sink
 
@@ -229,7 +245,10 @@ class Passes:
             debug_print(pre_function_parents)
             debug_print(post_function_parents)
 
-            if pre_function_id in post_function_parents or post_function_id in pre_function_parents:
+            if (
+                pre_function_id in post_function_parents
+                or post_function_id in pre_function_parents
+            ):
                 continue
 
             # might be too weak
@@ -244,8 +263,12 @@ class Passes:
             else:
                 # Consider the side effect
                 for common_ancestor in common_ancestors:
-                    for sub_common_ancestor in ts_analyzer.caller_callee_map[common_ancestor]:
-                        sub_common_ancestor_code = ts_analyzer.environment[sub_common_ancestor].function_code
+                    for sub_common_ancestor in ts_analyzer.caller_callee_map[
+                        common_ancestor
+                    ]:
+                        sub_common_ancestor_code = ts_analyzer.environment[
+                            sub_common_ancestor
+                        ].function_code
                         first_line = sub_common_ancestor_code.split("\n")[0]
                         if "void" not in first_line or "()" not in first_line:
                             return True
@@ -273,10 +296,10 @@ class Passes:
             (post_function_id, post_line_number) = locations[i + 1]
             currrent_function = ts_analyzer.environment[pre_function_id]
             pre_line_number_in_function = (
-                    pre_line_number - currrent_function.start_line_number + 1
+                pre_line_number - currrent_function.start_line_number + 1
             )
             post_line_number_in_function = (
-                    post_line_number - currrent_function.start_line_number + 1
+                post_line_number - currrent_function.start_line_number + 1
             )
 
             if pre_function_id != post_function_id:
@@ -286,9 +309,9 @@ class Passes:
                 continue
 
             if self.is_must_unreachable(
-                    pre_line_number_in_function,
-                    post_line_number_in_function,
-                    currrent_function,
+                pre_line_number_in_function,
+                post_line_number_in_function,
+                currrent_function,
             ):
                 debug_print(
                     "The following two lines do not conform to control flow order: \n",
@@ -308,8 +331,10 @@ class Passes:
 
     # Neural Analysis
     def intra_data_flow_check(
-            self, ts_analyzer: TSAnalyzer, trace: List[Tuple[int, str]],
-            is_measure_token_cost: bool = False
+        self,
+        ts_analyzer: TSAnalyzer,
+        trace: List[Tuple[int, str]],
+        is_measure_token_cost: bool = False,
     ):
         debug_print("Start data flow check")
 
@@ -321,7 +346,7 @@ class Passes:
             "wrong_flow_end_line_number": -1,
             "wrong_flow_response": "",
             "input_token_cost": 0,
-            "output_token_cost": 0
+            "output_token_cost": 0,
         }
 
         if len(trace) < 2:
@@ -329,8 +354,8 @@ class Passes:
             return False, output_results
 
         with open(
-                Path(__file__).resolve().parent.parent / "prompt" / self.spec_file_name,
-                "r",
+            Path(__file__).resolve().parent.parent / "prompt" / self.spec_file_name,
+            "r",
         ) as read_file:
             spec = json.load(read_file)
 
@@ -353,14 +378,14 @@ class Passes:
                 continue
 
             pre_line_number_in_function = (
-                    pre_line_number
-                    - ts_analyzer.environment[pre_function_id].start_line_number
-                    + 1
+                pre_line_number
+                - ts_analyzer.environment[pre_function_id].start_line_number
+                + 1
             )
             post_line_number_in_function = (
-                    post_line_number
-                    - ts_analyzer.environment[post_function_id].start_line_number
-                    + 1
+                post_line_number
+                - ts_analyzer.environment[post_function_id].start_line_number
+                + 1
             )
 
             function_name = ts_analyzer.environment[pre_function_id].function_name
@@ -376,7 +401,10 @@ class Passes:
             post_line_str = function_code.split("\n")[post_line_number_in_function - 1]
             post_line_str = " ".join(post_line_str.split(" ")[1:]).strip()
 
-            if pre_var_expr_name not in pre_line_str or post_var_expr_name not in post_line_str:
+            if (
+                pre_var_expr_name not in pre_line_str
+                or post_var_expr_name not in post_line_str
+            ):
                 print(pre_var_expr_name)
                 print(pre_line_str)
                 print(post_var_expr_name)
@@ -395,9 +423,14 @@ class Passes:
                 .replace("<POST_SYMBOL>", post_var_expr_name)
                 .replace("<PRE_LINE_STR>", pre_line_str)
                 .replace("<POST_LINE_STR>", post_line_str)
-                .replace("<INTRA_DATA_FLOW_EXAMPLES>", "\n".join(spec["intra_data_flow_examples"]))
+                .replace(
+                    "<INTRA_DATA_FLOW_EXAMPLES>",
+                    "\n".join(spec["intra_data_flow_examples"]),
+                )
             )
-            output, input_token_cost, output_token_cost = self.model.infer(message, is_measure_token_cost)
+            output, input_token_cost, output_token_cost = self.model.infer(
+                message, is_measure_token_cost
+            )
 
             output_results["input_token_cost"] += input_token_cost
             output_results["output_token_cost"] += output_token_cost
@@ -409,11 +442,13 @@ class Passes:
             line_numbers_in_output = set(map(int, re.findall(r"\b\d+\b", output)))
 
             if (
-                    pre_line_number_in_function not in line_numbers_in_output
-                    or post_line_number_in_function not in line_numbers_in_output
+                pre_line_number_in_function not in line_numbers_in_output
+                or post_line_number_in_function not in line_numbers_in_output
             ):
                 debug_print("pre_line_number_in_function", pre_line_number_in_function)
-                debug_print("post_line_number_in_function", post_line_number_in_function)
+                debug_print(
+                    "post_line_number_in_function", post_line_number_in_function
+                )
                 debug_print("output: ", output)
                 return False, output_results
 
@@ -430,7 +465,12 @@ class Passes:
         return True, output_results
 
     # Neural Analysis, deprecated
-    def escape_check(self, ts_analyzer: TSAnalyzer, trace: List[Tuple[int, str]], is_measure_token_cost: bool = False):
+    def escape_check(
+        self,
+        ts_analyzer: TSAnalyzer,
+        trace: List[Tuple[int, str]],
+        is_measure_token_cost: bool = False,
+    ):
         debug_print("Start escape check")
 
         if len(trace) < 2:
@@ -449,8 +489,8 @@ class Passes:
             return True
 
         with open(
-                Path(__file__).resolve().parent.parent / "prompt" / self.spec_file_name,
-                "r",
+            Path(__file__).resolve().parent.parent / "prompt" / self.spec_file_name,
+            "r",
         ) as read_file:
             spec = json.load(read_file)
 
@@ -472,20 +512,25 @@ class Passes:
                 .replace("<FUNCTION_NAME>", function.function_name)
                 .replace("<LINE_NUMBER>", str(line_number_in_function))
             )
-            output, input_token_cost, output_token_cost = self.model.infer(message, is_measure_token_cost)
+            output, input_token_cost, output_token_cost = self.model.infer(
+                message, is_measure_token_cost
+            )
 
             # debug_print("Checking the function: ", function.function_name)
             # debug_print("message: \n", message)
             # debug_print("output: ", output)
 
-            if "no" in output.split("\n")[-1].lower() and "yes" not in output.split("\n")[-1].lower():
+            if (
+                "no" in output.split("\n")[-1].lower()
+                and "yes" not in output.split("\n")[-1].lower()
+            ):
                 debug_print("message: \n", message)
                 debug_print("output: ", output)
                 return False
         return True
 
     def analyze_examples_str(
-            self, ts_analyzer: TSAnalyzer, example_str_list: List[str]
+        self, ts_analyzer: TSAnalyzer, example_str_list: List[str]
     ):
         pattern = r"Example (.+?)END REPORT----------------\n"
         matches = re.findall(pattern, "\n".join(example_str_list), re.DOTALL)
@@ -493,8 +538,8 @@ class Passes:
         cwd = Path(__file__).resolve().parent.absolute()
         TSPATH = cwd / "../../lib/build/"
         language_path = TSPATH / "my-languages.so"
-        java_lang: Language = Language(str(language_path), "java")
-        parser: tree_sitter.Parser = tree_sitter.Parser()
+        java_lang = Language(str(language_path), "java")
+        parser = tree_sitter.Parser()
         parser.set_language(java_lang)
 
         src_syntactic_types = set([])
@@ -515,8 +560,8 @@ class Passes:
             first_line = int(line_numbers[0])
             last_line = int(line_numbers[-1])
 
-            tree: tree_sitter.Tree = parser.parse(bytes(example_code, "utf8"))
-            root_node: tree_sitter.Node = tree.root_node
+            tree = parser.parse(bytes(example_code, "utf8"))
+            root_node = tree.root_node
             all_nodes = TSAnalyzer.find_all_nodes(root_node)
 
             src_node_list = []
@@ -541,7 +586,7 @@ class Passes:
         return src_syntactic_types, sink_syntactic_types
 
     def is_must_unreachable(
-            self, src_line_number: int, sink_line_number: int, function: Function
+        self, src_line_number: int, sink_line_number: int, function: Function
     ) -> bool:
         src_line_number_in_function = src_line_number - function.start_line_number + 1
         sink_line_number_in_function = sink_line_number - function.start_line_number + 1
@@ -554,25 +599,27 @@ class Passes:
                 (else_branch_start_line, else_branch_end_line),
             ) = function.if_statements[(condition_line, if_statement_end_line)]
             if (
-                    true_branch_start_line
-                    <= src_line_number_in_function
-                    <= true_branch_end_line
-                    and else_branch_start_line
-                    <= sink_line_number_in_function
-                    <= else_branch_end_line
+                true_branch_start_line
+                <= src_line_number_in_function
+                <= true_branch_end_line
+                and else_branch_start_line
+                <= sink_line_number_in_function
+                <= else_branch_end_line
             ):
                 return True
             if (
-                    true_branch_start_line
-                    <= src_line_number_in_function
-                    <= true_branch_end_line
-                    and else_branch_start_line
-                    <= sink_line_number_in_function
-                    <= else_branch_end_line
+                true_branch_start_line
+                <= src_line_number_in_function
+                <= true_branch_end_line
+                and else_branch_start_line
+                <= sink_line_number_in_function
+                <= else_branch_end_line
             ):
                 return True
         if src_line_number_in_function >= sink_line_number_in_function:
-            debug_print(src_line_number_in_function, " --> ", sink_line_number_in_function)
+            debug_print(
+                src_line_number_in_function, " --> ", sink_line_number_in_function
+            )
             return True
         return False
 

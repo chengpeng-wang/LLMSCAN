@@ -40,11 +40,11 @@ def parse_bug_report(output):
             trace = []
             # Use regular expression to find and extract line numbers and data
             for item in bug_trace.replace("(Line ", "(")[1:-1].split("), ("):
-                line_number_str = item[:item.find(", ")]
-                var_name_str = item[item.find(", ") + 2:]
+                line_number_str = item[: item.find(", ")]
+                var_name_str = item[item.find(", ") + 2 :]
                 if len(var_name_str) <= 2:
                     continue
-                var_name_str = item[item.find(", ") + 2:][:-1]
+                var_name_str = item[item.find(", ") + 2 :][:-1]
                 if "is_null" in var_name_str:
                     var_name_str = var_name_str.replace("is_null", "")
                 elif "is_zero" in var_name_str:

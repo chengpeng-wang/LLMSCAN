@@ -16,7 +16,7 @@ class LLM:
     """
 
     def __init__(
-            self, online_model_name: str, openai_key: str, temperature: float
+        self, online_model_name: str, openai_key: str, temperature: float
     ) -> None:
         self.online_model_name = online_model_name
         self.encoding = tiktoken.encoding_for_model("gpt-3.5-turbo-0125")
@@ -25,7 +25,9 @@ class LLM:
         self.systemRole = "You are a experienced Java programmer and good at understanding Java programs."
         return
 
-    def infer(self, message: str, is_measure_cost: bool = False) -> Tuple[str, int, int]:
+    def infer(
+        self, message: str, is_measure_cost: bool = False
+    ) -> Tuple[str, int, int]:
         print(self.online_model_name, "is running")
         output = ""
         if "gemini" in self.online_model_name:
@@ -34,10 +36,15 @@ class LLM:
             output = self.infer_claude(message)
         elif "gpt" in self.online_model_name:
             output = self.infer_with_openai_model(message)
-        input_token_cost = 0 if not is_measure_cost else len(self.encoding.encode(self.systemRole)) + len(
-            self.encoding.encode(message)
+        input_token_cost = (
+            0
+            if not is_measure_cost
+            else len(self.encoding.encode(self.systemRole))
+            + len(self.encoding.encode(message))
         )
-        output_token_cost = 0 if not is_measure_cost else len(self.encoding.encode(output))
+        output_token_cost = (
+            0 if not is_measure_cost else len(self.encoding.encode(output))
+        )
         return output, input_token_cost, output_token_cost
 
     def infer_with_gemini(self, message: str) -> str:
@@ -47,7 +54,7 @@ class LLM:
         def simulate_ctrl_c(signal, frame):
             raise KeyboardInterrupt("Simulating Ctrl+C")
 
-        gemini_model = genai.GenerativeModel('gemini-pro')
+        gemini_model = genai.GenerativeModel("gemini-pro")
         signal.signal(signal.SIGALRM, timeout_handler)
 
         received = False
@@ -82,8 +89,13 @@ class LLM:
                     },
                 ]
 
-                response = gemini_model.generate_content(message, safety_settings=safety_settings,
-                                                         generation_config=genai.types.GenerationConfig(temperature=self.temperature))
+                response = gemini_model.generate_content(
+                    message,
+                    safety_settings=safety_settings,
+                    generation_config=genai.types.GenerationConfig(
+                        temperature=self.temperature
+                    ),
+                )
                 time.sleep(2)
                 signal.alarm(0)  # Cancel the timeout
                 output = response.text
@@ -127,7 +139,9 @@ class LLM:
                 signal.alarm(60)  # Set a timeout of 20 seconds
                 openai.api_key = self.openai_key
                 response = openai.ChatCompletion.create(
-                    model=self.online_model_name, messages=input, temperature=self.temperature
+                    model=self.online_model_name,
+                    messages=input,
+                    temperature=self.temperature,
                 )
                 signal.alarm(0)  # Cancel the timeout
                 output = response.choices[0].message.content
@@ -177,7 +191,9 @@ class LLM:
                 # Use OpenAI official APIs
                 client = OpenAI(api_key=standard_keys[0])
                 response = client.chat.completions.create(
-                    model=self.online_model_name, messages=model_input, temperature=self.temperature
+                    model=self.online_model_name,
+                    messages=model_input,
+                    temperature=self.temperature,
                 )
 
                 # ## OpenAI version: 0.28.0

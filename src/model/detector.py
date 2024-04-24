@@ -52,15 +52,21 @@ class Detector:
         if not is_reflection:
             message += "\n".join(spec["meta_prompts_without_reflection"]) + "\n"
             message = message.replace("<PROGRAM>", program)
-            message = message.replace("<RE_EMPHASIZE_RULE>", "\n".join(spec["re_emphasize_rules"]))
+            message = message.replace(
+                "<RE_EMPHASIZE_RULE>", "\n".join(spec["re_emphasize_rules"])
+            )
         else:
             message += "\n".join(spec["meta_prompts_with_reflection"]) + "\n"
             message = message.replace("<PROGRAM>", program).replace(
                 "<PREVIOUS_REPORT>", previous_report
             )
-            message = message.replace("<RE_EMPHASIZE_RULE>", "\n".join(spec["re_emphasize_rules"]))
+            message = message.replace(
+                "<RE_EMPHASIZE_RULE>", "\n".join(spec["re_emphasize_rules"])
+            )
 
-        response, input_token_cost, output_token_cost = self.model.infer(message, is_measure_token_cost)
+        response, input_token_cost, output_token_cost = self.model.infer(
+            message, is_measure_token_cost
+        )
 
         debug_print("------------------------------")
         debug_print(message)
@@ -75,7 +81,7 @@ class Detector:
             "response": response,
             "all program size": len(program.split("\n")),
             "input_token_cost": input_token_cost,
-            "output_token_cost": output_token_cost
+            "output_token_cost": output_token_cost,
         }
 
         with open(log_file_path + "/" + json_file_name + ".json", "w") as file:

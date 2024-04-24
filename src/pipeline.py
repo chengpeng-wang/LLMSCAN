@@ -11,20 +11,20 @@ import signal
 
 
 def start_llm_hal_spot_run(
-        java_file,
-        code_in_support_files,
-        inference_online_model_name,
-        inference_key,
-        validation_online_model_name,
-        validation_key,
-        spec_file_name,
-        analysis_mode,
-        neural_check_strategy,
-        is_measure_token_cost
+    java_file,
+    code_in_support_files,
+    inference_online_model_name,
+    inference_key,
+    validation_online_model_name,
+    validation_key,
+    spec_file_name,
+    analysis_mode,
+    neural_check_strategy,
+    is_measure_token_cost,
 ):
     cnt = 0
 
-    case_name = java_file[java_file.rfind("/") + 1:].replace(".java", "")
+    case_name = java_file[java_file.rfind("/") + 1 :].replace(".java", "")
     print(
         "---------------------------------------------------------------------------------------"
     )
@@ -35,7 +35,8 @@ def start_llm_hal_spot_run(
 
     is_exist_inference = False
     log_dir_path = str(
-        Path(__file__).resolve().parent.parent / ("log/initial_inference/" + inference_online_model_name)
+        Path(__file__).resolve().parent.parent
+        / ("log/initial_inference/" + inference_online_model_name)
     )
     if not os.path.exists(log_dir_path):
         os.makedirs(log_dir_path)
@@ -54,12 +55,18 @@ def start_llm_hal_spot_run(
     # Verification
     if inference_online_model_name == validation_online_model_name:
         verification_log_file_dir = str(
-            Path(__file__).resolve().parent.parent / ("log/hal_spot/" + inference_online_model_name)
+            Path(__file__).resolve().parent.parent
+            / ("log/hal_spot/" + inference_online_model_name)
         )
     else:
         verification_log_file_dir = str(
-            Path(__file__).resolve().parent.parent / (
-                        "log/hal_spot/" + inference_online_model_name + "_" + validation_online_model_name)
+            Path(__file__).resolve().parent.parent
+            / (
+                "log/hal_spot/"
+                + inference_online_model_name
+                + "_"
+                + validation_online_model_name
+            )
         )
     if not os.path.exists(verification_log_file_dir):
         os.makedirs(verification_log_file_dir)
@@ -86,7 +93,7 @@ def start_llm_hal_spot_run(
     # Analyze the code with LLM or load existing response
     if not is_exist_inference or analysis_mode == "eager":
         detector = Detector(inference_online_model_name, inference_key, spec_file_name)
-        json_file_name = java_file[java_file.rfind("/") + 1:].replace(".java", "")
+        json_file_name = java_file[java_file.rfind("/") + 1 :].replace(".java", "")
 
         iterative_cnt = 0
         while True:
@@ -98,7 +105,7 @@ def start_llm_hal_spot_run(
                 lined_new_code,
                 code_in_support_files,
                 False,
-                is_measure_token_cost
+                is_measure_token_cost,
             )
             bug_num, traces, first_report = parse_bug_report(output)
             print(traces)
@@ -166,7 +173,7 @@ def start_llm_hal_spot_run(
         "control_flow_check": 0,
         "intra_data_flow_check": 0,
         "total": 0,
-        "final": 0
+        "final": 0,
     }
     trace_check_results = []
 
@@ -181,7 +188,7 @@ def start_llm_hal_spot_run(
             "control_flow_check": 0,
             "intra_data_flow_check": 0,
             "total": 0,
-            "final": 0
+            "final": 0,
         }
 
         if str(trace) in history_trace_strs:
@@ -206,13 +213,22 @@ def start_llm_hal_spot_run(
         print("--------------------------------------------")
 
         function_check_result, function_check_output_results = (
-            passes.function_check(ts_analyzer, trace, is_measure_token_cost)) \
-            if neural_check_strategy["function_check"] else (True, {})
+            (passes.function_check(ts_analyzer, trace, is_measure_token_cost))
+            if neural_check_strategy["function_check"]
+            else (True, {})
+        )
         if function_check_result:
             cnt_dict["function_check"] += 1
             cnt_dict_in_single_trace["function_check"] += 1
-        with open(verification_log_file_dir + "/" + case_name + "_" + str(trace_cnt)
-                  + "_function_check.json", "w") as file:
+        with open(
+            verification_log_file_dir
+            + "/"
+            + case_name
+            + "_"
+            + str(trace_cnt)
+            + "_function_check.json",
+            "w",
+        ) as file:
             json.dump(function_check_output_results, file, indent=4)
         print("function_check_result: ", function_check_result)
         print("--------------------------------------------")
@@ -234,27 +250,45 @@ def start_llm_hal_spot_run(
         print("--------------------------------------------")
 
         intra_data_flow_check_result, intra_data_flow_check_output_results = (
-            passes.intra_data_flow_check(ts_analyzer, trace, is_measure_token_cost)) \
-            if neural_check_strategy["intra_dataflow_check"] else (True, {})
+            (passes.intra_data_flow_check(ts_analyzer, trace, is_measure_token_cost))
+            if neural_check_strategy["intra_dataflow_check"]
+            else (True, {})
+        )
         if intra_data_flow_check_result:
             cnt_dict["intra_data_flow_check"] += 1
             cnt_dict_in_single_trace["intra_data_flow_check"] += 1
-        with open(verification_log_file_dir + "/" + case_name + "_" + str(trace_cnt)
-                  + "_intra_data_flow_check.json", "w") as file:
+        with open(
+            verification_log_file_dir
+            + "/"
+            + case_name
+            + "_"
+            + str(trace_cnt)
+            + "_intra_data_flow_check.json",
+            "w",
+        ) as file:
             json.dump(intra_data_flow_check_output_results, file, indent=4)
         print("intra_data_flow_check_result: ", intra_data_flow_check_result)
         print("--------------------------------------------")
 
-        escape_check_result = passes.escape_check(ts_analyzer, trace, is_measure_token_cost) \
-            if neural_check_strategy["escape_check"] else True
+        escape_check_result = (
+            passes.escape_check(ts_analyzer, trace, is_measure_token_cost)
+            if neural_check_strategy["escape_check"]
+            else True
+        )
         if escape_check_result:
             cnt_dict["escape_check"] += 1
             cnt_dict_in_single_trace["escape_check"] += 1
         print("escape_check_result: ", escape_check_result)
         print("--------------------------------------------")
 
-        if syntactic_check_result and call_graph_check_result and intra_data_flow_check_result and \
-                function_check_result and escape_check_result and intra_data_flow_check_result:
+        if (
+            syntactic_check_result
+            and call_graph_check_result
+            and intra_data_flow_check_result
+            and function_check_result
+            and escape_check_result
+            and intra_data_flow_check_result
+        ):
             cnt_dict["final"] += 1
             cnt_dict_in_single_trace["final"] += 1
 
@@ -296,7 +330,7 @@ def start_llm_hal_spot_run(
         "trace_check_results": trace_check_results,
     }
 
-    output_json_file_name = (Path(verification_log_file_dir) / (case_name + ".json"))
+    output_json_file_name = Path(verification_log_file_dir) / (case_name + ".json")
     with open(output_json_file_name, "w") as file:
         json.dump(output_results, file, indent=4)
 
@@ -308,13 +342,9 @@ def start_llm_hal_spot_run(
 
 # Baseline 1 (deprecated)
 def start_self_reflection_run(
-        java_file,
-        code_in_support_files,
-        online_model_name,
-        key,
-        spec_file_name
+    java_file, code_in_support_files, online_model_name, key, spec_file_name
 ):
-    case_name = java_file[java_file.rfind("/") + 1:].replace(".java", "")
+    case_name = java_file[java_file.rfind("/") + 1 :].replace(".java", "")
     print(
         "---------------------------------------------------------------------------------------"
     )
@@ -324,10 +354,12 @@ def start_self_reflection_run(
     )
 
     input_log_dir_path = str(
-        Path(__file__).resolve().parent.parent / ("log/initial_inference/" + online_model_name)
+        Path(__file__).resolve().parent.parent
+        / ("log/initial_inference/" + online_model_name)
     )
     self_reflection_output_log_dir_path = str(
-        Path(__file__).resolve().parent.parent / ("log/self_reflection/" + online_model_name)
+        Path(__file__).resolve().parent.parent
+        / ("log/self_reflection/" + online_model_name)
     )
     existing_json_file_names = set([])
 
@@ -344,7 +376,7 @@ def start_self_reflection_run(
 
     total_traces_dic = {}
 
-    assert (len(existing_json_file_names) > 0)
+    assert len(existing_json_file_names) > 0
 
     for json_file_name in existing_json_file_names:
         with open(json_file_name) as existing_json_file:
@@ -353,9 +385,9 @@ def start_self_reflection_run(
 
             bug_num, traces, first_report = parse_bug_report(output)
             detector = Detector(online_model_name, key, spec_file_name)
-            json_file_name_without_suffix = (
-                json_file_name[json_file_name.rfind("/") + 1:].replace(".json", "")
-            )
+            json_file_name_without_suffix = json_file_name[
+                json_file_name.rfind("/") + 1 :
+            ].replace(".json", "")
 
             iterative_cnt = 0
             while True:
@@ -384,7 +416,9 @@ def start_self_reflection_run(
             print("Trace Num: ", len(traces))
 
             existing_result["response"]["response"] = output
-            total_traces_dic[json_file_name.replace("initial_inference", "self_reflection")] = existing_result
+            total_traces_dic[
+                json_file_name.replace("initial_inference", "self_reflection")
+            ] = existing_result
 
     for json_file_name in total_traces_dic:
         with open(json_file_name, "w") as file:
@@ -393,18 +427,18 @@ def start_self_reflection_run(
 
 # Baseline 2
 def start_self_verification_run(
-        java_file,
-        code_in_support_files,
-        online_model_name,
-        key,
-        spec_file_name,
-        is_measure_token_cost,
-        step_by_step_verification,
-        global_self_consistency_k,
-        temperature
+    java_file,
+    code_in_support_files,
+    online_model_name,
+    key,
+    spec_file_name,
+    is_measure_token_cost,
+    step_by_step_verification,
+    global_self_consistency_k,
+    temperature,
 ):
     model = LLM(online_model_name, key, temperature)
-    case_name = java_file[java_file.rfind("/") + 1:].replace(".java", "")
+    case_name = java_file[java_file.rfind("/") + 1 :].replace(".java", "")
     print(
         "---------------------------------------------------------------------------------------"
     )
@@ -414,7 +448,8 @@ def start_self_verification_run(
     )
 
     input_log_dir_path = str(
-        Path(__file__).resolve().parent.parent / ("log/initial_inference/" + online_model_name)
+        Path(__file__).resolve().parent.parent
+        / ("log/initial_inference/" + online_model_name)
     )
     existing_json_file_names = set([])
 
@@ -429,20 +464,30 @@ def start_self_verification_run(
         new_code = delete_comments(source_code)
         lined_new_code = add_line_numbers(new_code)
 
-    assert (len(existing_json_file_names) == 1)
+    assert len(existing_json_file_names) == 1
 
     for json_file_name in existing_json_file_names:
         verification_result = []
 
-        output_json_file_name = json_file_name.replace("initial_inference", "self_verification")
+        output_json_file_name = json_file_name.replace(
+            "initial_inference", "self_verification"
+        )
         strategy = "step_by_step" if step_by_step_verification else "direct_ask"
-        output_json_file_name = output_json_file_name.replace(".json", "") + "_" \
-                                + strategy + "_" + str(global_self_consistency_k) + "_" + str(temperature) + ".json"
+        output_json_file_name = (
+            output_json_file_name.replace(".json", "")
+            + "_"
+            + strategy
+            + "_"
+            + str(global_self_consistency_k)
+            + "_"
+            + str(temperature)
+            + ".json"
+        )
 
         if os.path.exists(output_json_file_name):
             continue
 
-        with (open(json_file_name) as existing_json_file):
+        with open(json_file_name) as existing_json_file:
             existing_result = json.load(existing_json_file)
             output = existing_result["response"]["response"]
 
@@ -460,8 +505,8 @@ def start_self_verification_run(
 
                     while True:
                         with open(
-                                Path(__file__).resolve().parent / "prompt" / spec_file_name,
-                                "r",
+                            Path(__file__).resolve().parent / "prompt" / spec_file_name,
+                            "r",
                         ) as read_file:
                             spec = json.load(read_file)
 
@@ -471,44 +516,73 @@ def start_self_verification_run(
 
                         program = ""
                         for support_file in code_in_support_files:
-                            program += "The following is the file " + support_file + ":\n"
-                            program += "```\n" + code_in_support_files[support_file] + "\n```\n\n"
+                            program += (
+                                "The following is the file " + support_file + ":\n"
+                            )
+                            program += (
+                                "```\n"
+                                + code_in_support_files[support_file]
+                                + "\n```\n\n"
+                            )
                         program += (
-                                "The following is the file " + json_file_name[json_file_name.rfind("/") + 1:] + ":\n"
+                            "The following is the file "
+                            + json_file_name[json_file_name.rfind("/") + 1 :]
+                            + ":\n"
                         )
                         program += "```\n" + lined_new_code + "\n```\n\n"
 
                         if step_by_step_verification:
-                            message += "\n".join(spec["meta_prompts_with_verification_step_by_step"]) + "\n"
+                            message += (
+                                "\n".join(
+                                    spec["meta_prompts_with_verification_step_by_step"]
+                                )
+                                + "\n"
+                            )
                         else:
-                            message += "\n".join(spec["meta_prompts_with_verification_direct_ask"]) + "\n"
+                            message += (
+                                "\n".join(
+                                    spec["meta_prompts_with_verification_direct_ask"]
+                                )
+                                + "\n"
+                            )
                         message = message.replace("<PROGRAM>", program).replace(
                             "<BUG_TRACE>", str(trace)
                         )
-                        message = message.replace("<RE_EMPHASIZE_RULE>", "\n".join(spec["re_emphasize_rules"]))
+                        message = message.replace(
+                            "<RE_EMPHASIZE_RULE>", "\n".join(spec["re_emphasize_rules"])
+                        )
 
-                        single_output, single_input_token_cost, single_output_token_cost = model.infer(message,
-                                                                                                       is_measure_token_cost)
+                        (
+                            single_output,
+                            single_input_token_cost,
+                            single_output_token_cost,
+                        ) = model.infer(message, is_measure_token_cost)
                         debug_print("------------------Output-------------------------")
                         debug_print(single_output)
                         input_token_cost += single_input_token_cost
                         output_token_cost += single_output_token_cost
 
-                        if "yes" in single_output.split("\n")[-1].lower() or "no" in single_output.split("\n")[
-                            -1].lower():
+                        if (
+                            "yes" in single_output.split("\n")[-1].lower()
+                            or "no" in single_output.split("\n")[-1].lower()
+                        ):
                             break
                         if iterative_cnt > iterative_count_bound:
                             break
                     if single_output == "":
                         is_false_positive = False
                     else:
-                        is_false_positive = "no" in single_output.split("\n")[-1].lower() or "yes" not in \
-                                        single_output.split("\n")[-1].lower()
+                        is_false_positive = (
+                            "no" in single_output.split("\n")[-1].lower()
+                            or "yes" not in single_output.split("\n")[-1].lower()
+                        )
                     debug_print(not is_false_positive)
                     answers.append(not is_false_positive)
                 print("Hit: ", answers.count(True), answers.count(False))
                 is_report = answers.count(True) > answers.count(False)
-                verification_result.append([trace, output, is_report, input_token_cost, output_token_cost])
+                verification_result.append(
+                    [trace, output, is_report, input_token_cost, output_token_cost]
+                )
 
             output_results = {
                 "original code": existing_result["response"]["original code"],

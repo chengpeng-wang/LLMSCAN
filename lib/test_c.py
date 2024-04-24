@@ -75,9 +75,31 @@ methods = {}
 #
 # exit(0)
 
-for node in root.children:
-    if node.type == "comment":
-        print(source_code[node.start_byte:node.end_byte])
+for node in find_nodes(root, "if_statement"):
+    for sub_node in node.children:
+        print("-----------------------------------")
+        print(sub_node.type)
+        print("-----------------------------------")
+        print(source_code[sub_node.start_byte:sub_node.end_byte])
+
+        # print("-----------------------------------")
+        # print(source_code[sub_node.start_byte:sub_node.end_byte])
+        # for sub_sub_node in sub_node.children:
+        #     print("---------------------------")
+        #     print(sub_sub_node.type)
+        #     print(source_code[sub_sub_node.start_byte:sub_sub_node.end_byte])
+        # print("-----------------------------------")
+        # print(source_code[sub_node.start_byte:sub_node.end_byte])
+        # if sub_node.type != "function_declarator":
+        #     continue
+        # for sub_sub_node in sub_node.children:
+        #     if sub_sub_node.type == "identifier":
+        #         print(source_code[sub_sub_node.start_byte:sub_sub_node.end_byte])
+
+
+# for node in root.children:
+#     if node.type == "function_definition":
+#         print(source_code[node.start_byte:node.end_byte])
         # for sub_node in node.children:
         #     for sub_sub_node in sub_node.children:
         #         if sub_sub_node.type == "parameter_list":
