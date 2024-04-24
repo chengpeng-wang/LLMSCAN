@@ -33,7 +33,7 @@ class BatchRun:
         self.spec_file = spec_file
         self.project_name = project_name
         self.simplified_project_name = self.project_name + "_simplified"
-        self.all_java_files = []
+        self.all_c_files = []
         self.all_single_files = []
 
         self.inference_model_name = inference_model_name
@@ -45,7 +45,7 @@ class BatchRun:
         self.code_in_support_files = {}
         cwd = Path(__file__).resolve().parent.parent.absolute()
         support_dir = str(
-            cwd / "benchmark/Java/" / self.simplified_project_name / "testcasesupport"
+            cwd / "benchmark/C/" / self.simplified_project_name / "testcasesupport"
         )
         for root, dirs, files in os.walk(support_dir):
             for file in files:
@@ -59,8 +59,8 @@ class BatchRun:
 
     def batch_transform_projects(self) -> None:
         cwd = Path(__file__).resolve().parent.parent.absolute()
-        full_project_name = cwd / "benchmark/Java/" / self.project_name
-        new_full_project_name = cwd / "benchmark/Java/" / self.simplified_project_name
+        full_project_name = cwd / "benchmark/C/" / self.project_name
+        new_full_project_name = cwd / "benchmark/C/" / self.simplified_project_name
 
         if os.path.exists(new_full_project_name):
             shutil.rmtree(new_full_project_name)
@@ -70,11 +70,11 @@ class BatchRun:
         history = set([])
         for root, dirs, files in os.walk(new_full_project_name):
             for file in files:
-                if file.endswith(".java") and file.startswith("CWE"):
-                    if not re.search(r"_\d+[a-z]$", file.replace(".java", "")):
+                if file.endswith(".c") and file.startswith("CWE"):
+                    if not re.search(r"_\d+[a-z]$", file.replace(".c", "")):
                         continue
                     file_path = os.path.join(root, file)
-                    match_str = file.replace(".java", "")[0:-1]
+                    match_str = file.replace(".c", "")[0:-1]
                     if file_path in history:
                         continue
                     cluster = []
@@ -83,7 +83,7 @@ class BatchRun:
 
                     for root2, dirs2, files2 in os.walk(new_full_project_name):
                         for file2 in files2:
-                            if file2 in history or "_base.java" in file2:
+                            if file2 in history or "_base.c" in file2:
                                 continue
                             full_path2 = os.path.join(root2, file2)
                             if file2.startswith(match_str) and (
@@ -95,7 +95,7 @@ class BatchRun:
         for file_cluster in cluster_list:
             is_class_split = True
             for file_path in file_cluster:
-                trim_file_path = file_path.replace(".java", "")
+                trim_file_path = file_path.replace(".c", "")
                 if not re.search(r"_\d+[a-z]$", trim_file_path):
                     is_class_split = False
             if is_class_split:
@@ -105,13 +105,13 @@ class BatchRun:
 
         for root, dirs, files in os.walk(new_full_project_name):
             for file in files:
-                if file.endswith(".java") and file.startswith("CWE"):
-                    if re.search(r"_\d+$", file.replace(".java", "")):
-                        self.all_java_files.append(os.path.join(root, file))
+                if file.endswith(".c") and file.startswith("CWE"):
+                    if re.search(r"_\d+$", file.replace(".c", "")):
+                        self.all_c_files.append(os.path.join(root, file))
 
-        for full_java_file_path in self.all_java_files:
-            if re.search(r"_\d+$", full_java_file_path.replace(".java", "")):
-                self.all_single_files.append(full_java_file_path)
+        for full_c_file_path in self.all_c_files:
+            if re.search(r"_\d+$", full_c_file_path.replace(".c", "")):
+                self.all_single_files.append(full_c_file_path)
         return
 
     def start_batch_run_llm_hal_spot(
@@ -148,19 +148,20 @@ class BatchRun:
         if not os.path.exists(inference_log_dir_path):
             os.makedirs(inference_log_dir_path)
 
-        for java_file in self.all_single_files:
+        for c_file in self.all_single_files:
             if project_mode == "single":
-                if main_test_file not in java_file:
+                if main_test_file not in c_file:
                     continue
             elif project_mode == "partial":
-                if main_test_track not in java_file:
+                if main_test_track not in c_file:
                     continue
 
+            print(c_file)
             total_cnt += 1
             print("Analyze ID: ", total_cnt)
 
             false_cnt_dict = start_llm_hal_spot_run(
-                java_file,
+                c_file,
                 self.code_in_support_files,
                 self.inference_model_name,
                 self.inference_key_str,
@@ -189,12 +190,12 @@ class BatchRun:
         self.batch_transform_projects()
 
         total_cnt = 0
-        for java_file in self.all_single_files:
+        for c_file in self.all_single_files:
             if project_mode == "single":
-                if main_test_file not in java_file:
+                if main_test_file not in c_file:
                     continue
             elif project_mode == "partial":
-                if main_test_track not in java_file:
+                if main_test_track not in c_file:
                     continue
 
             total_cnt += 1
@@ -202,7 +203,7 @@ class BatchRun:
 
             # # Run self-reflection
             # start_self_reflection_run(
-            #     java_file,
+            #     c_file,
             #     self.code_in_support_files,
             #     self.validation_model_name,
             #     self.validation_key_str,
@@ -211,7 +212,7 @@ class BatchRun:
 
             # Run self-verification
             start_self_verification_run(
-                java_file,
+                c_file,
                 self.code_in_support_files,
                 self.validation_model_name,
                 self.validation_key_str,
@@ -234,36 +235,19 @@ def run_dev_mode():
     ]
     specs = ["dbz.json", "npd.json", "xss.json", "ci.json", "apt.json"]
     main_test_files = [
-        "CWE369_Divide_by_Zero__int_Environment_modulo_73",
+        "CWE369_Divide_by_Zero__float_connect_socket_02",
         "CWE476_NULL_Pointer_Dereference__StringBuilder_07",
         "CWE80_XSS__Servlet_URLConnection_75",
         "CWE78_OS_Command_Injection__connect_tcp_06",
         "CWE36_Absolute_Path_Traversal__connect_tcp_14",
     ]
     main_test_tracks = [
-        "CWE369_Divide_by_Zero__int_Environment_modulo",
+        "CWE369_Divide_by_Zero__float_connect_socket",
         "CWE476_NULL_Pointer_Dereference__StringBuilder",
         "CWE80_XSS__Servlet_URLConnection",
         "CWE78_OS_Command_Injection__connect_tcp",
         "CWE36_Absolute_Path_Traversal__connect_tcp",
     ]
-
-    # ##### Measure time cost (only using gpt-3.5) Begin #############
-    # main_test_files = [
-    #     "CWE369_Divide_by_Zero__float_connect_tcp_divide_01",
-    #     "CWE476_NULL_Pointer_Dereference__binary_if_01",
-    #     "CWE80_XSS__CWE182_Servlet_connect_tcp_01",
-    #     "CWE78_OS_Command_Injection__database_01",
-    #     "CWE36_Absolute_Path_Traversal__console_readLine_01"
-    # ]
-    # main_test_tracks = [
-    #     "CWE369_Divide_by_Zero__float_connect_tcp_divide",
-    #     "CWE476_NULL_Pointer_Dereference__binary_if",
-    #     "CWE80_XSS__CWE182_Servlet_connect_tcp",
-    #     "CWE78_OS_Command_Injection__database",
-    #     "CWE36_Absolute_Path_Traversal__console_readLine"
-    # ]
-    # ##### Measure time cost (only using gpt-3.5) End #############
 
     models = [
         "gpt-3.5-turbo-0125",
@@ -621,4 +605,4 @@ def run_release_mode():
 
 
 if __name__ == "__main__":
-    run_release_mode()
+    run_dev_mode()

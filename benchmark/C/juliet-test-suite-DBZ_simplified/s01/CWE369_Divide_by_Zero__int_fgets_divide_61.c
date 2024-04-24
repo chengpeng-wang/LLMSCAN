@@ -103,31 +103,6 @@ int main(int argc, char * argv[])
     return 0;
 }
 
-#endif
-/* TEMPLATE GENERATED TESTCASE FILE
-Filename: CWE369_Divide_by_Zero__int_fgets_divide_61b.c
-Label Definition File: CWE369_Divide_by_Zero__int.label.xml
-Template File: sources-sinks-61b.tmpl.c
-*/
-/*
- * @description
- * CWE: 369 Divide by Zero
- * BadSource: fgets Read data from the console using fgets()
- * GoodSource: Non-zero
- * Sinks: divide
- *    GoodSink: Check for zero before dividing
- *    BadSink : Divide a constant by data
- * Flow Variant: 61 Data flow: data returned from one function to another in different source files
- *
- * */
-
-
-#define CHAR_ARRAY_SIZE (3 * sizeof(data) + 2)
-
-#ifndef OMITBAD
-
-int CWE369_Divide_by_Zero__int_fgets_divide_61b_badSource(int data)
-{
     {
         char inputBuffer[CHAR_ARRAY_SIZE] = "";
         /* POTENTIAL FLAW: Read data from the console using fgets() */
@@ -142,23 +117,9 @@ int CWE369_Divide_by_Zero__int_fgets_divide_61b_badSource(int data)
         }
     }
     return data;
-}
-
-#endif /* OMITBAD */
-
-#ifndef OMITGOOD
-
-/* goodG2B() uses the GoodSource with the BadSink */
-int CWE369_Divide_by_Zero__int_fgets_divide_61b_goodG2BSource(int data)
-{
     /* FIX: Use a value not equal to zero */
     data = 7;
     return data;
-}
-
-/* goodB2G() uses the BadSource with the GoodSink */
-int CWE369_Divide_by_Zero__int_fgets_divide_61b_goodB2GSource(int data)
-{
     {
         char inputBuffer[CHAR_ARRAY_SIZE] = "";
         /* POTENTIAL FLAW: Read data from the console using fgets() */
@@ -174,5 +135,3 @@ int CWE369_Divide_by_Zero__int_fgets_divide_61b_goodB2GSource(int data)
     }
     return data;
 }
-
-#endif /* OMITGOOD */

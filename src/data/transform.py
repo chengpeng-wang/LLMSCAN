@@ -8,7 +8,7 @@ def transform_function_split_cluster_files(file_cluster: List[str]) -> None:
     main_file = None
     for file_path in file_cluster:
         is_main_class = False
-        trim_file_path = file_path.replace(".java", "")
+        trim_file_path = file_path.replace(".c", "")
         if trim_file_path.endswith("a"):
             main_file = file_path
             is_main_class = True
@@ -43,7 +43,7 @@ def transform_function_split_cluster_files(file_cluster: List[str]) -> None:
                 transformed_lines.append(transformed_line)
         file_lines_dic[file_path] = transformed_lines
 
-    new_file_path = main_file.replace(".java", "")[0:-1] + ".java"
+    new_file_path = main_file.replace(".c", "")[0:-1] + ".c"
     new_lines = file_lines_dic[main_file][:-1]
     for file_path in file_lines_dic:
         if file_path == main_file:
@@ -61,7 +61,7 @@ def transform_class_split_cluster_files(file_cluster: List[str]) -> None:
     main_file = None
     for file_path in file_cluster:
         is_main_class = False
-        trim_file_path = file_path.replace(".java", "")
+        trim_file_path = file_path.replace(".c", "")
         if trim_file_path.endswith("a"):
             main_file = file_path
             is_main_class = True
@@ -84,7 +84,7 @@ def transform_class_split_cluster_files(file_cluster: List[str]) -> None:
                 elif line.startswith("    public "):
                     split_tokens = line.replace("    ", "").split(" ")
                     class_name = file_path[file_path.rfind("/") + 1 :].replace(
-                        ".java", ""
+                        ".c", ""
                     )
                     split_tokens[2] = class_name + "_" + split_tokens[2]
                     transformed_line = "    "
@@ -94,7 +94,7 @@ def transform_class_split_cluster_files(file_cluster: List[str]) -> None:
                 transformed_lines.append(transformed_line)
         file_lines_dic[file_path] = transformed_lines
 
-    new_file_path = main_file.replace(".java", "")[0:-1] + ".java"
+    new_file_path = main_file.replace(".c", "")[0:-1] + ".c"
     new_lines = file_lines_dic[main_file][:-1]
     for file_path in file_lines_dic:
         if file_path == main_file:
@@ -128,10 +128,10 @@ def delete_comments(source_code):
     TSPATH = cwd / "../lib/build/"
     language_path = TSPATH / "my-languages.so"
 
-    JAVA_LANGUAGE = tree_sitter.Language(str(language_path), "c")
+    C_LANGUAGE = tree_sitter.Language(str(language_path), "c")
 
     parser = tree_sitter.Parser()
-    parser.set_language(JAVA_LANGUAGE)
+    parser.set_language(C_LANGUAGE)
 
     t = parser.parse(bytes(source_code, "utf8"))
     root_node = t.root_node

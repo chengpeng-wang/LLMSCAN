@@ -78,7 +78,7 @@ class TSParser:
         self,
         file_path: str,
         source_code: str,
-        root_node: tree_sitter.Tree,
+        tree: tree_sitter.Tree,
     ) -> None:
         """
         Extract class declaration info: class name, fields, and methods
@@ -87,7 +87,7 @@ class TSParser:
         :param package_name: The package name
         :param root_node: The root node the parse tree
         """
-        all_function_nodes = TSAnalyzer.find_nodes_by_type(root_node, "function_definition")
+        all_function_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
         for node in all_function_nodes:
             # get function name
             method_name = ""

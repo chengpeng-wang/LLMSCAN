@@ -123,48 +123,9 @@ int main(int argc, char * argv[])
     return 0;
 }
 
-#endif
-/* TEMPLATE GENERATED TESTCASE FILE
-Filename: CWE369_Divide_by_Zero__int_listen_socket_modulo_61b.c
-Label Definition File: CWE369_Divide_by_Zero__int.label.xml
-Template File: sources-sinks-61b.tmpl.c
-*/
-/*
- * @description
- * CWE: 369 Divide by Zero
- * BadSource: listen_socket Read data using a listen socket (server side)
- * GoodSource: Non-zero
- * Sinks: modulo
- *    GoodSink: Check for zero before modulo
- *    BadSink : Modulo a constant with data
- * Flow Variant: 61 Data flow: data returned from one function to another in different source files
- *
- * */
-
-
-#ifdef _WIN32
-#pragma comment(lib, "ws2_32") /* include ws2_32.lib when linking */
-#define CLOSE_SOCKET closesocket
-#else
-#define INVALID_SOCKET -1
-#define SOCKET_ERROR -1
-#define CLOSE_SOCKET close
-#define SOCKET int
-#endif
-
-#define TCP_PORT 27015
-#define LISTEN_BACKLOG 5
-#define CHAR_ARRAY_SIZE (3 * sizeof(data) + 2)
-
-#ifndef OMITBAD
-
-int CWE369_Divide_by_Zero__int_listen_socket_modulo_61b_badSource(int data)
-{
     {
-#ifdef _WIN32
         WSADATA wsaData;
         int wsaDataInit = 0;
-#endif
         int recvResult;
         struct sockaddr_in service;
         SOCKET listenSocket = INVALID_SOCKET;
@@ -172,13 +133,11 @@ int CWE369_Divide_by_Zero__int_listen_socket_modulo_61b_badSource(int data)
         char inputBuffer[CHAR_ARRAY_SIZE];
         do
         {
-#ifdef _WIN32
             if (WSAStartup(MAKEWORD(2,2), &wsaData) != NO_ERROR)
             {
                 break;
             }
             wsaDataInit = 1;
-#endif
             /* POTENTIAL FLAW: Read data using a listen socket */
             listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
             if (listenSocket == INVALID_SOCKET)
@@ -222,36 +181,18 @@ int CWE369_Divide_by_Zero__int_listen_socket_modulo_61b_badSource(int data)
         {
             CLOSE_SOCKET(acceptSocket);
         }
-#ifdef _WIN32
         if (wsaDataInit)
         {
             WSACleanup();
         }
-#endif
     }
     return data;
-}
-
-#endif /* OMITBAD */
-
-#ifndef OMITGOOD
-
-/* goodG2B() uses the GoodSource with the BadSink */
-int CWE369_Divide_by_Zero__int_listen_socket_modulo_61b_goodG2BSource(int data)
-{
     /* FIX: Use a value not equal to zero */
     data = 7;
     return data;
-}
-
-/* goodB2G() uses the BadSource with the GoodSink */
-int CWE369_Divide_by_Zero__int_listen_socket_modulo_61b_goodB2GSource(int data)
-{
     {
-#ifdef _WIN32
         WSADATA wsaData;
         int wsaDataInit = 0;
-#endif
         int recvResult;
         struct sockaddr_in service;
         SOCKET listenSocket = INVALID_SOCKET;
@@ -259,13 +200,11 @@ int CWE369_Divide_by_Zero__int_listen_socket_modulo_61b_goodB2GSource(int data)
         char inputBuffer[CHAR_ARRAY_SIZE];
         do
         {
-#ifdef _WIN32
             if (WSAStartup(MAKEWORD(2,2), &wsaData) != NO_ERROR)
             {
                 break;
             }
             wsaDataInit = 1;
-#endif
             /* POTENTIAL FLAW: Read data using a listen socket */
             listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
             if (listenSocket == INVALID_SOCKET)
@@ -309,14 +248,10 @@ int CWE369_Divide_by_Zero__int_listen_socket_modulo_61b_goodB2GSource(int data)
         {
             CLOSE_SOCKET(acceptSocket);
         }
-#ifdef _WIN32
         if (wsaDataInit)
         {
             WSACleanup();
         }
-#endif
     }
     return data;
 }
-
-#endif /* OMITGOOD */
