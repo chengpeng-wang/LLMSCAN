@@ -76,14 +76,15 @@ methods = {}
 # exit(0)
 
 for node in root.children:
-    if node.type == "function_definition":
-        for sub_node in node.children:
-            for sub_sub_node in sub_node.children:
-                if sub_sub_node.type == "parameter_list":
-                    for sub4node in sub_sub_node.children:
-                        if sub4node.type == "parameter_declaration":
-                            idenNode = find_nodes(sub4node, "identifier")[0]
-                            print(source_code[idenNode.start_byte:idenNode.end_byte])
+    if node.type == "comment":
+        print(source_code[node.start_byte:node.end_byte])
+        # for sub_node in node.children:
+        #     for sub_sub_node in sub_node.children:
+        #         if sub_sub_node.type == "parameter_list":
+        #             for sub4node in sub_sub_node.children:
+        #                 if sub4node.type == "parameter_declaration":
+        #                     idenNode = find_nodes(sub4node, "identifier")[0]
+        #                     print(source_code[idenNode.start_byte:idenNode.end_byte])
 
 
 
