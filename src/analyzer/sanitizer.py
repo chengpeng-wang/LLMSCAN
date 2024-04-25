@@ -1,4 +1,4 @@
-from verifier.analyzer import *
+from parser.program_parser import *
 from data.transform import *
 from model.llm import *
 from model.utils import *
