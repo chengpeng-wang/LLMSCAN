@@ -5,15 +5,19 @@
             "data"
         ],
         [
+            95,
+            "data"
+        ],
+        [
             114,
             "data"
         ]
     ],
     "all program size": 73,
-    "wrong_flow_function": "",
-    "wrong_flow_start_line_number": -1,
-    "wrong_flow_end_line_number": -1,
-    "wrong_flow_response": "",
+    "wrong_flow_function": "CWE369_Divide_by_Zero__float_connect_socket_02_hoo",
+    "wrong_flow_start_line_number": 50,
+    "wrong_flow_end_line_number": 95,
+    "wrong_flow_response": "Step 1: The variable/expression data appears in `data = 0.0F;` and the variable/expression data appears in `data = (float)atof(inputBuffer);`. Both occurrences of data are the same variable.\n\nStep 2: The value of the variable data at line 5 is initialized to 0.0F, and the value of the variable data at line 50 is updated by converting the inputBuffer to a float using atof. Therefore, the value of the variable data at line 5 and the value of the variable data at line 50 are not necessarily the same.\n\nNo",
     "input_token_cost": 0,
     "output_token_cost": 0
 }

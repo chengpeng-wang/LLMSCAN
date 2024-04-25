@@ -1,3 +1,4 @@
 # Prompt of bugs
 
-TODO: The prompts in the current json files are for java analysis. We need to update them for C/C++ analysis.
+TODO: Except for dbz.json, the prompts in other json files are for java analysis. We need to update them for C/C++ analysis.
+
