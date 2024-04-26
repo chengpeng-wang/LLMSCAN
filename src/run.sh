@@ -19,9 +19,9 @@ python3 run_main.py \
   --bug-type=dbz \
   --inference-model=gpt-3.5-turbo-0125 \
   --validation-model=gpt-3.5-turbo-0125 \
-  --analysis-mode=lazy \
+  --analysis-mode=eager \
   --project-mode=single \
-  --engine=llmhalspot \
+  --pipeline-mode=llmhalspot \
   -intra-dataflow-check \
   -function-check \
   --global-temperature=0.0 \

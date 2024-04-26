@@ -9,26 +9,120 @@ from pathlib import Path
 from model.llm import *
 from typing import Dict
 from model.utils import *
+from parser.program_parser import *
+from analyzer.extractor import *
 
 
 class Detector:
-    def __init__(self, online_model_name: str, key, spec_file_name: str):
+    def __init__(self, ts_analyzer: TSAnalyzer, online_model_name: str, key, spec_file_name: str):
+        self.ts_analyzer = ts_analyzer
         self.online_model_name = online_model_name
         self.key = key
         self.model = LLM(self.online_model_name, self.key, 0)
         self.spec_file_name = spec_file_name
+
+    def extract_detection_scopes(self, is_on_demand: bool = True):
+        if not is_on_demand:
+            with open(self.ts_analyzer.c_file_path, "r") as file:
+                source_code = file.read()
+                analyze_code = obfuscate(source_code)
+            function_ids = List[self.ts_analyzer.environment.keys()]
+            return [(function_ids, analyze_code)]
+
+        function_srcs_dict = {}
+        function_sinks_dict = {}
+
+        for function_id in self.ts_analyzer.environment:
+            function = self.ts_analyzer.environment[function_id]
+            sources = find_dbz_src(function.function_code, function.parse_tree.root_node)
+            function_srcs_dict[function_id] = sources
+            sinks = find_dbz_sink(function.function_code, function.parse_tree.root_node)
+            function_sinks_dict[function_id] = sinks
+
+        scope_str_sets = set([])
+        scopes = []
+        for (function_ids, analyze_code) in self.extract_top_down_detection_scopes(function_srcs_dict, function_sinks_dict):
+            scope_str = str(function_ids)
+            if scope_str not in scope_str_sets:
+                scopes.append((function_ids, analyze_code))
+                scope_str_sets.add(scope_str)
+
+        for (function_ids, analyze_code) in self.extract_bottom_up_detection_scopes(function_srcs_dict, function_sinks_dict):
+            scope_str = str(function_ids)
+            if scope_str not in scope_str_sets:
+                scopes.append((function_ids, analyze_code))
+                scope_str_sets.add(scope_str)
+        print(len(scopes))
+        for (function_ids, analyze_code) in scopes:
+            print(function_ids)
+            print(analyze_code)
+            for function_id in function_ids:
+                print(self.ts_analyzer.environment[function_id].function_name)
+            print("\n")
+        exit(0)
+        return scopes
+
+    def extract_top_down_detection_scopes(self, function_srcs_dict, function_sinks_dict):
+        scopes = []
+        top_down_call_stacks = []
+        for function_id in function_srcs_dict:
+            transitive_callees = self.compute_transitive_callee(function_id, self.ts_analyzer.caller_callee_map)
+            for transitive_callee in transitive_callees:
+                if transitive_callee not in function_sinks_dict:
+                    continue
+                if len(function_sinks_dict[transitive_callee]) == 0:
+                    continue
+                source_function_id = function_id
+                sink_function_id = transitive_callee
+                single_top_down_call_stack = self.compute_top_down_call_stacks_from_src_to_sink(source_function_id,
+                                                                                                sink_function_id,
+                                                                                                self.ts_analyzer.caller_callee_map)
+                top_down_call_stacks.extend(single_top_down_call_stack)
+
+        for call_stack in top_down_call_stacks:
+            function_ids = []
+            analyze_code = ""
+            for function_id in call_stack:
+                function_ids.append(function_id)
+                analyze_code += self.ts_analyzer.environment[function_id].function_code + "\n"
+            function_ids = sorted(function_ids)
+            scopes.append((function_ids, analyze_code))
+        return scopes
+
+    def extract_bottom_up_detection_scopes(self, function_srcs_dict, function_sinks_dict):
+        scopes = []
+        bottom_up_call_stacks = []
+        for function_id in function_sinks_dict:
+            transitive_callers = self.compute_transitive_callers(function_id, self.ts_analyzer.callee_caller_map)
+            for transitive_caller in transitive_callers:
+                if transitive_caller not in function_srcs_dict:
+                    continue
+                if len(function_srcs_dict[transitive_caller]) == 0:
+                    continue
+                source_function_id = transitive_caller
+                sink_function_id = function_id
+                single_bottom_up_call_stack = self.compute_bottom_up_call_stacks_from_src_to_sink(source_function_id,
+                                                                                                sink_function_id,
+                                                                                                self.ts_analyzer.callee_caller_map)
+                bottom_up_call_stacks.extend(single_bottom_up_call_stack)
+
+        for call_stack in bottom_up_call_stacks:
+            function_ids = []
+            analyze_code = ""
+            for function_id in call_stack:
+                function_ids.append(function_id)
+                analyze_code += self.ts_analyzer.environment[function_id].function_code + "\n"
+            function_ids = sorted(function_ids)
+            scopes.append((function_ids, analyze_code))
+        return scopes
 
     def start_run_model(
         self,
         file_name: str,
         json_file_name: str,
         log_file_path: str,
-        original_code: str,
         analyzed_code: str,
-        code_in_support_files: Dict[str, str],
-        is_reflection: bool = False,
-        is_measure_token_cost: bool = False,
-        previous_report: str = "",
+        code_in_support_files: Dict[str, str]
     ):
         with open(
             Path(__file__).resolve().parent.parent / "prompt" / self.spec_file_name,
@@ -47,25 +141,18 @@ class Detector:
         program += (
             "The following is the file " + file_name[file_name.rfind("/") + 1 :] + ":\n"
         )
+
+        analyzed_code = add_line_numbers(analyzed_code)
         program += "```\n" + analyzed_code + "\n```\n\n"
 
-        if not is_reflection:
-            message += "\n".join(spec["meta_prompts_without_reflection"]) + "\n"
-            message = message.replace("<PROGRAM>", program)
-            message = message.replace(
-                "<RE_EMPHASIZE_RULE>", "\n".join(spec["re_emphasize_rules"])
-            )
-        else:
-            message += "\n".join(spec["meta_prompts_with_reflection"]) + "\n"
-            message = message.replace("<PROGRAM>", program).replace(
-                "<PREVIOUS_REPORT>", previous_report
-            )
-            message = message.replace(
-                "<RE_EMPHASIZE_RULE>", "\n".join(spec["re_emphasize_rules"])
-            )
+        message += "\n".join(spec["meta_prompts_without_reflection"]) + "\n"
+        message = message.replace("<PROGRAM>", program)
+        message = message.replace(
+            "<RE_EMPHASIZE_RULE>", "\n".join(spec["re_emphasize_rules"])
+        )
 
         response, input_token_cost, output_token_cost = self.model.infer(
-            message, is_measure_token_cost
+            message, False
         )
 
         debug_print("------------------------------")
@@ -76,7 +163,6 @@ class Detector:
         debug_print(file_name)
         debug_print("------------------------------")
         output_results = {
-            "original code": original_code,
             "analyzed code": analyzed_code,
             "response": response,
             "all program size": len(program.split("\n")),
@@ -87,3 +173,57 @@ class Detector:
         with open(log_file_path + "/" + json_file_name + ".json", "w") as file:
             json.dump({"response": output_results}, file, indent=4)
         return response
+
+    def compute_transitive_callers(self, function_id: int, callee_caller_map) -> List[int]:
+        transitive_callers = []
+        if function_id not in callee_caller_map:
+            return transitive_callers
+        for caller_id in callee_caller_map[function_id]:
+            transitive_callers.append(caller_id)
+            transitive_callers.extend(self.compute_transitive_callers(caller_id, callee_caller_map))
+        return transitive_callers
+
+    def compute_transitive_callee(self, function_id: int, caller_callee_map) -> List[int]:
+        transitive_callees = []
+        if function_id not in caller_callee_map:
+            return transitive_callees
+        for callee_id in caller_callee_map[function_id]:
+            transitive_callees.append(callee_id)
+            transitive_callees.extend(self.compute_transitive_callee(callee_id, caller_callee_map))
+        return transitive_callees
+
+    def compute_bottom_up_call_stacks_from_src_to_sink(self,
+                                                       src_function_id: int,
+                                                       sink_function_id: int,
+                                                       callee_caller_map) -> List[List[int]]:
+        bottom_up_call_stacks = []
+        if src_function_id == sink_function_id:
+            return [[src_function_id]]
+        if src_function_id not in callee_caller_map:
+            return bottom_up_call_stacks
+        for caller_id in callee_caller_map[src_function_id]:
+            if caller_id == sink_function_id:
+                bottom_up_call_stacks.append([caller_id])
+            else:
+                for call_stack in self.compute_bottom_up_call_stacks_from_src_to_sink(caller_id, sink_function_id, callee_caller_map):
+                    call_stack.append(caller_id)
+                    bottom_up_call_stacks.append(call_stack)
+        return bottom_up_call_stacks
+
+    def compute_top_down_call_stacks_from_src_to_sink(self,
+                                                      src_function_id: int,
+                                                      sink_function_id: int,
+                                                      caller_callee_map) -> List[List[int]]:
+        top_down_call_stacks = []
+        if src_function_id == sink_function_id:
+            return [[src_function_id]]
+        if src_function_id not in caller_callee_map:
+            return top_down_call_stacks
+        for callee_id in caller_callee_map[src_function_id]:
+            if callee_id == sink_function_id:
+                top_down_call_stacks.append([callee_id])
+            else:
+                for call_stack in self.compute_top_down_call_stacks_from_src_to_sink(callee_id, sink_function_id, caller_callee_map):
+                    call_stack.append(callee_id)
+                    top_down_call_stacks.append(call_stack)
+        return top_down_call_stacks

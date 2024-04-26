@@ -1,37 +1,23 @@
 /* TEMPLATE GENERATED TESTCASE FILE
-Filename: CWE78_OS_Command_Injection__char_connect_socket_execl_01.c
-Label Definition File: CWE78_OS_Command_Injection.strings.label.xml
-Template File: sources-sink-01.tmpl.c
+Filename: CWE369_Divide_by_Zero__float_connect_socket_02.c
+Label Definition File: CWE369_Divide_by_Zero__float.label.xml
+Template File: sources-sinks-02.tmpl.c
 */
 /*
  * @description
- * CWE: 78 OS Command Injection
+ * CWE: 369 Divide by Zero
  * BadSource: connect_socket Read data using a connect socket (client side)
- * GoodSource: Fixed string
- * Sink: execl
- *    BadSink : execute command with execl
- * Flow Variant: 01 Baseline
+ * GoodSource: A hardcoded non-zero number (two)
+ * Sinks:
+ *    GoodSink: Check value of or near zero before dividing
+ *    BadSink : Divide a constant by data
+ * Flow Variant: 02 Control flow: if(1) and if(0)
  *
  * */
 
 #include "std_testcase.h"
 
-#include <wchar.h>
-
-#ifdef _WIN32
-#define COMMAND_INT_PATH "%WINDIR%\\system32\\cmd.exe"
-#define COMMAND_INT "cmd.exe"
-#define COMMAND_ARG1 "/c"
-#define COMMAND_ARG2 "dir "
-#define COMMAND_ARG3 data
-#else /* NOT _WIN32 */
-#include <unistd.h>
-#define COMMAND_INT_PATH "/bin/sh"
-#define COMMAND_INT "sh"
-#define COMMAND_ARG1 "-c"
-#define COMMAND_ARG2 "ls "
-#define COMMAND_ARG3 data
-#endif
+#include <math.h>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -44,6 +30,7 @@ Template File: sources-sink-01.tmpl.c
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
 #define CLOSE_SOCKET close
@@ -51,126 +38,315 @@ Template File: sources-sink-01.tmpl.c
 #endif
 
 #define TCP_PORT 27015
+#define CHAR_ARRAY_SIZE 20
 #define IP_ADDRESS "127.0.0.1"
-
-#ifdef _WIN32
-#include <process.h>
-#define EXECL _execl
-#else /* NOT _WIN32 */
-#define EXECL execl
-#endif
 
 #ifndef OMITBAD
 
-void CWE78_OS_Command_Injection__char_connect_socket_execl_01_bad()
+void CWE369_Divide_by_Zero__float_connect_socket_02_bad()
 {
-    char * data;
-    char dataBuffer[100] = COMMAND_ARG2;
-    data = dataBuffer;
+    float data;
+    /* Initialize data */
+    data = 0.0F;
+    if(1)
     {
-#ifdef _WIN32
-        WSADATA wsaData;
-        int wsaDataInit = 0;
-#endif
-        int recvResult;
-        struct sockaddr_in service;
-        char *replace;
-        SOCKET connectSocket = INVALID_SOCKET;
-        size_t dataLen = strlen(data);
-        do
         {
 #ifdef _WIN32
-            if (WSAStartup(MAKEWORD(2,2), &wsaData) != NO_ERROR)
-                break;
-            else if (a != 0)
+            WSADATA wsaData;
+            int wsaDataInit = 0;
+#endif
+            int recvResult;
+            struct sockaddr_in service;
+            SOCKET connectSocket = INVALID_SOCKET;
+            char inputBuffer[CHAR_ARRAY_SIZE];
+            do
+            {
+#ifdef _WIN32
+                if (WSAStartup(MAKEWORD(2,2), &wsaData) != NO_ERROR)
+                {
+                    break;
+                }
                 wsaDataInit = 1;
-            else
-                wsaDataInit = 0;
-
-            wsaDataInit = 1;
 #endif
-            /* POTENTIAL FLAW: Read data using a connect socket */
-            connectSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-            if (connectSocket == INVALID_SOCKET)
-            {
-                break;
+                connectSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+                if (connectSocket == INVALID_SOCKET)
+                {
+                    break;
+                }
+                memset(&service, 0, sizeof(service));
+                service.sin_family = AF_INET;
+                service.sin_addr.s_addr = inet_addr(IP_ADDRESS);
+                service.sin_port = htons(TCP_PORT);
+                if (connect(connectSocket, (struct sockaddr*)&service, sizeof(service)) == SOCKET_ERROR)
+                {
+                    break;
+                }
+                /* Abort on error or the connection was closed, make sure to recv one
+                 * less char than is in the recv_buf in order to append a terminator */
+                /* POTENTIAL FLAW: Use a value input from the network */
+                recvResult = recv(connectSocket, inputBuffer, CHAR_ARRAY_SIZE - 1, 0);
+                if (recvResult == SOCKET_ERROR || recvResult == 0)
+                {
+                    break;
+                }
+                /* NUL-terminate string */
+                inputBuffer[recvResult] = '\0';
+                /* Convert to float */
+                data = (float)atof(inputBuffer);
             }
-            memset(&service, 0, sizeof(service));
-            service.sin_family = AF_INET;
-            service.sin_addr.s_addr = inet_addr(IP_ADDRESS);
-            service.sin_port = htons(TCP_PORT);
-            if (connect(connectSocket, (struct sockaddr*)&service, sizeof(service)) == SOCKET_ERROR)
+            while (0);
+            if (connectSocket != INVALID_SOCKET)
             {
-                break;
+                CLOSE_SOCKET(connectSocket);
             }
-            /* Abort on error or the connection was closed, make sure to recv one
-             * less char than is in the recv_buf in order to append a terminator */
-            /* Abort on error or the connection was closed */
-            recvResult = recv(connectSocket, (char *)(data + dataLen), sizeof(char) * (100 - dataLen - 1), 0);
-            if (recvResult == SOCKET_ERROR || recvResult == 0)
-            {
-                break;
-            }
-            /* Append null terminator */
-            data[dataLen + recvResult / sizeof(char)] = '\0';
-            /* Eliminate CRLF */
-            replace = strchr(data, '\r');
-            if (replace)
-            {
-                *replace = '\0';
-            }
-            replace = strchr(data, '\n');
-            if (replace)
-            {
-                *replace = '\0';
-            }
-        }
-        while (0);
-        if (connectSocket != INVALID_SOCKET)
-        {
-            CLOSE_SOCKET(connectSocket);
-        }
 #ifdef _WIN32
-        if (wsaDataInit)
-        {
-            WSACleanup();
-        }
+            if (wsaDataInit)
+            {
+                WSACleanup();
+            }
 #endif
+        }
     }
-    /* execl - specify the path where the command is located */
-    /* POTENTIAL FLAW: Execute command without validating input possibly leading to command injection */
-    EXECL(COMMAND_INT_PATH, COMMAND_INT_PATH, COMMAND_ARG1, COMMAND_ARG3, NULL);
+    if(1)
+    {
+        {
+            /* POTENTIAL FLAW: Possibly divide by zero */
+            int result = (int)(100.0 / data);
+            printIntLine(result);
+        }
+    }
 }
 
 #endif /* OMITBAD */
 
 #ifndef OMITGOOD
 
-/* goodG2B uses the GoodSource with the BadSink */
-static void goodG2B()
+/* goodB2G1() - use badsource and goodsink by changing the second 1 to 0 */
+static void goodB2G1()
 {
-    char * data;
-    char dataBuffer[100] = COMMAND_ARG2;
-    data = dataBuffer;
-    /* FIX: Append a fixed string to data (not user / external input) */
-    strcat(data, "*.*");
-    /* execl - specify the path where the command is located */
-    /* POTENTIAL FLAW: Execute command without validating input possibly leading to command injection */
-    EXECL(COMMAND_INT_PATH, COMMAND_INT_PATH, COMMAND_ARG1, COMMAND_ARG3, NULL);
+    float data;
+    /* Initialize data */
+    data = 0.0F;
+    if(1)
+    {
+        {
+#ifdef _WIN32
+            WSADATA wsaData;
+            int wsaDataInit = 0;
+#endif
+            int recvResult;
+            struct sockaddr_in service;
+            SOCKET connectSocket = INVALID_SOCKET;
+            char inputBuffer[CHAR_ARRAY_SIZE];
+            do
+            {
+#ifdef _WIN32
+                if (WSAStartup(MAKEWORD(2,2), &wsaData) != NO_ERROR)
+                {
+                    break;
+                }
+                wsaDataInit = 1;
+#endif
+                connectSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+                if (connectSocket == INVALID_SOCKET)
+                {
+                    break;
+                }
+                memset(&service, 0, sizeof(service));
+                service.sin_family = AF_INET;
+                service.sin_addr.s_addr = inet_addr(IP_ADDRESS);
+                service.sin_port = htons(TCP_PORT);
+                if (connect(connectSocket, (struct sockaddr*)&service, sizeof(service)) == SOCKET_ERROR)
+                {
+                    break;
+                }
+                /* Abort on error or the connection was closed, make sure to recv one
+                 * less char than is in the recv_buf in order to append a terminator */
+                /* POTENTIAL FLAW: Use a value input from the network */
+                recvResult = recv(connectSocket, inputBuffer, CHAR_ARRAY_SIZE - 1, 0);
+                if (recvResult == SOCKET_ERROR || recvResult == 0)
+                {
+                    break;
+                }
+                /* NUL-terminate string */
+                inputBuffer[recvResult] = '\0';
+                /* Convert to float */
+                data = (float)atof(inputBuffer);
+            }
+            while (0);
+            if (connectSocket != INVALID_SOCKET)
+            {
+                CLOSE_SOCKET(connectSocket);
+            }
+#ifdef _WIN32
+            if (wsaDataInit)
+            {
+                WSACleanup();
+            }
+#endif
+        }
+    }
+    if(0)
+    {
+        /* INCIDENTAL: CWE 561 Dead Code, the code below will never run */
+        printLine("Benign, fixed string");
+    }
+    else
+    {
+        /* FIX: Check for value of or near zero before dividing */
+        if(fabs(data) > 0.000001)
+        {
+            int result = (int)(100.0 / data);
+            printIntLine(result);
+        }
+        else
+        {
+            printLine("This would result in a divide by zero");
+        }
+    }
 }
 
-void CWE78_OS_Command_Injection__char_connect_socket_execl_01_good()
+/* goodB2G2() - use badsource and goodsink by reversing the blocks in the second if */
+static void goodB2G2()
 {
-    goodG2B();
+    float data;
+    /* Initialize data */
+    data = 0.0F;
+    if(1)
+    {
+        {
+#ifdef _WIN32
+            WSADATA wsaData;
+            int wsaDataInit = 0;
+#endif
+            int recvResult;
+            struct sockaddr_in service;
+            SOCKET connectSocket = INVALID_SOCKET;
+            char inputBuffer[CHAR_ARRAY_SIZE];
+            do
+            {
+#ifdef _WIN32
+                if (WSAStartup(MAKEWORD(2,2), &wsaData) != NO_ERROR)
+                {
+                    break;
+                }
+                wsaDataInit = 1;
+#endif
+                connectSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+                if (connectSocket == INVALID_SOCKET)
+                {
+                    break;
+                }
+                memset(&service, 0, sizeof(service));
+                service.sin_family = AF_INET;
+                service.sin_addr.s_addr = inet_addr(IP_ADDRESS);
+                service.sin_port = htons(TCP_PORT);
+                if (connect(connectSocket, (struct sockaddr*)&service, sizeof(service)) == SOCKET_ERROR)
+                {
+                    break;
+                }
+                /* Abort on error or the connection was closed, make sure to recv one
+                 * less char than is in the recv_buf in order to append a terminator */
+                /* POTENTIAL FLAW: Use a value input from the network */
+                recvResult = recv(connectSocket, inputBuffer, CHAR_ARRAY_SIZE - 1, 0);
+                if (recvResult == SOCKET_ERROR || recvResult == 0)
+                {
+                    break;
+                }
+                /* NUL-terminate string */
+                inputBuffer[recvResult] = '\0';
+                /* Convert to float */
+                data = (float)atof(inputBuffer);
+            }
+            while (0);
+            if (connectSocket != INVALID_SOCKET)
+            {
+                CLOSE_SOCKET(connectSocket);
+            }
+#ifdef _WIN32
+            if (wsaDataInit)
+            {
+                WSACleanup();
+            }
+#endif
+        }
+    }
+    if(1)
+    {
+        /* FIX: Check for value of or near zero before dividing */
+        if(fabs(data) > 0.000001)
+        {
+            int result = (int)(100.0 / data);
+            printIntLine(result);
+        }
+        else
+        {
+            printLine("This would result in a divide by zero");
+        }
+    }
+}
+
+/* goodG2B1() - use goodsource and badsink by changing the first 1 to 0 */
+static void goodG2B1()
+{
+    float data;
+    /* Initialize data */
+    data = 0.0F;
+    if(0)
+    {
+        /* INCIDENTAL: CWE 561 Dead Code, the code below will never run */
+        printLine("Benign, fixed string");
+    }
+    else
+    {
+        /* FIX: Use a hardcoded number that won't a divide by zero */
+        data = 2.0F;
+    }
+    if(1)
+    {
+        {
+            /* POTENTIAL FLAW: Possibly divide by zero */
+            int result = (int)(100.0 / data);
+            printIntLine(result);
+        }
+    }
+}
+
+/* goodG2B2() - use goodsource and badsink by reversing the blocks in the first if */
+static void goodG2B2()
+{
+    float data;
+    /* Initialize data */
+    data = 0.0F;
+    if(1)
+    {
+        /* FIX: Use a hardcoded number that won't a divide by zero */
+        data = 2.0F;
+    }
+    if(1)
+    {
+        {
+            /* POTENTIAL FLAW: Possibly divide by zero */
+            int result = (int)(100.0 / data);
+            printIntLine(result);
+        }
+    }
+}
+
+void CWE369_Divide_by_Zero__float_connect_socket_02_good()
+{
+    goodB2G1();
+    goodB2G2();
+    goodG2B1();
+    goodG2B2();
 }
 
 #endif /* OMITGOOD */
 
 /* Below is the main(). It is only used when building this testcase on
- * its own for testing or for building a binary to use in testing binary
- * analysis tools. It is not used when compiling all the testcases as one
- * application, which is how source code analysis tools are tested.
- */
+   its own for testing or for building a binary to use in testing binary
+   analysis tools. It is not used when compiling all the testcases as one
+   application, which is how source code analysis tools are tested. */
 
 #ifdef INCLUDEMAIN
 
@@ -180,12 +356,12 @@ int main(int argc, char * argv[])
     srand( (unsigned)time(NULL) );
 #ifndef OMITGOOD
     printLine("Calling good()...");
-    CWE78_OS_Command_Injection__char_connect_socket_execl_01_good();
+    CWE369_Divide_by_Zero__float_connect_socket_02_good();
     printLine("Finished good()");
 #endif /* OMITGOOD */
 #ifndef OMITBAD
     printLine("Calling bad()...");
-    CWE78_OS_Command_Injection__char_connect_socket_execl_01_bad();
+    CWE369_Divide_by_Zero__float_connect_socket_02_bad();
     printLine("Finished bad()");
 #endif /* OMITBAD */
     return 0;

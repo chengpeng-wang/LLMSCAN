@@ -130,7 +130,7 @@ class TSAnalyzer:
 
     def __init__(
         self,
-        java_file_path: str,
+        c_file_path: str,
         original_code: str,
         analyzed_code: str,
         support_files: Dict[str, str],
@@ -138,19 +138,24 @@ class TSAnalyzer:
         """
         Initialize TSParser with the project path.
         Currently we only analyze a single java file
-        :param java_file_path: The path of a java file
+        :param c_file_path: The path of a c file
         """
-        self.java_file_path: str = java_file_path
-        self.ts_parser: TSParser = TSParser(java_file_path)
+        self.c_file_path = c_file_path
+        self.ts_parser = TSParser(c_file_path)
         self.original_code = original_code
         self.analyzed_code = analyzed_code
         self.support_files = support_files
 
-        self.ts_parser.extract_single_file(self.java_file_path, self.analyzed_code)
+        self.ts_parser.extract_single_file(self.c_file_path, self.analyzed_code)
 
         self.environment = {}
         self.caller_callee_map = {}
         self.callee_caller_map = {}
+
+        print(len(self.ts_parser.methods))
+        for method_id in self.ts_parser.methods:
+            (name, code, start_line_number, end_line_number) = self.ts_parser.methods[method_id]
+            print(name)
 
         for function_id in self.ts_parser.methods:
             (name, function_code, start_line_number, end_line_number) = (
@@ -166,6 +171,16 @@ class TSAnalyzer:
                 current_function
             )
             self.environment[function_id] = current_function
+
+        for callee_id in self.callee_caller_map:
+            for caller_id in self.callee_caller_map[callee_id]:
+                (callee_name, _, _, _) = (
+                    self.ts_parser.methods[callee_id]
+                )
+                (caller_name, _, _, _) = (
+                    self.ts_parser.methods[caller_id]
+                )
+                print(callee_name, caller_name)
 
         self.main_ids = self.find_all_top_functions()
         self.tmp_variable_count = 0
@@ -187,7 +202,6 @@ class TSAnalyzer:
                 main_ids.append(method_id)
         return main_ids
 
-    @staticmethod
     def find_all_nodes(root_node: tree_sitter.Node) -> List[tree_sitter.Node]:
         if root_node is None:
             return []
@@ -220,7 +234,15 @@ class TSAnalyzer:
         :return the list of the ids of called functions
         """
         assert call_expr_node.type == "call_expression"
+        method_name = ""
         method_name = source_code[call_expr_node.start_byte : call_expr_node.end_byte]
+        for sub_child in call_expr_node.children:
+            if sub_child.type == "identifier":
+                method_name = source_code[sub_child.start_byte:sub_child.end_byte]
+                break
+
+        (caller_name, _, _, _) = self.ts_parser.methods[method_id]
+        print("caller:", caller_name, "callee:", method_name)
 
         callee_ids = []
         for method_id in self.ts_parser.functionToFile:

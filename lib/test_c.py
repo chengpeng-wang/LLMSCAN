@@ -21,7 +21,6 @@ def find_nodes(root_node: tree_sitter.Node, node_type: str) -> List[tree_sitter.
         nodes.extend(find_nodes(child_node, node_type))
     return nodes
 
-
 # Read the Java file
 with open("c_demo_program.c", "r") as file:
     source_code = file.read()
@@ -32,120 +31,42 @@ tree = parser.parse(bytes(source_code, "utf8"))
 root = tree.root_node
 methods = {}
 
-# for node in find_nodes(root, "call_expression"):
-#     for sub_child in node.children:
-#         # if sub_child.type == "argument_list":
-#         #     for sub_sub_child in sub_child.children:
-#         #         print(sub_sub_child.type)
-#         #         if sub_sub_child.type == "pointer_expression":
-#         #             for sub_sub_sub_child in sub_sub_child.children:
-#         #                 if sub_sub_sub_child.type == "identifier":
-#         #                     print(source_code[sub_sub_sub_child.start_byte:sub_sub_sub_child.end_byte])
-#         if sub_child.type == "compound_statement":
-#             for sub_sub_child in sub_child.children:
-#                 print(sub_sub_child.type)
-#             if sub_child.type == "function_declarator":
-#                 for sub_sub_children in sub_child.children:
-#                     # if sub_sub_children.type == "identifier":
-#                     #     method_name = source_code[
-#                     #                   sub_sub_children.start_byte: sub_sub_children.end_byte
-#                     #                   ]
-#                     #     method_code = source_code[
-#                     #                   node.start_byte: node.end_byte
-#                     #                   ]
-#                     #     print(method_name)
-#                     #     break
-#                     print(sub_sub_children.type)
-#                     if sub_sub_children.type == "parameter_list":
-#                         for subnode in sub_sub_children.children:
-#                             if subnode.type == "parameter_declaration":
-#                                 for subsubnode in subnode.children:
-#                                     print(subsubnode.type)
+nodes = find_nodes(root, "call_expression")
+for node in nodes:
+    for child in node.children:
+        if child.type == "identifier":
+            method_name = source_code[child.start_byte: child.end_byte]
+            print(method_name)
+
+
+
+
+# nodes = find_nodes(root, "assignment_expression")
 #
-#                 if method_name != "" and method_code != "":
-#                     break
-#         method_id = len(methods) + 1
-#         methods[method_id] = (method_name, method_code)
+# # Find local_variable_declaration
+# nodes.extend(find_nodes(root, "declaration"))
 #
-# # for node in find_nodes(root, "assignment_expression"):
-# #     for sub_node in node.children:
-# #         print(sub_node.type)
-# #         # if sub_node.type == "identifier":
-# #         #     print(source_code[sub_node.start_byte:sub_node.end_byte])
-#
-# exit(0)
-
-for node in find_nodes(root, "if_statement"):
-    for sub_node in node.children:
-        print("-----------------------------------")
-        print(sub_node.type)
-        print("-----------------------------------")
-        print(source_code[sub_node.start_byte:sub_node.end_byte])
-
-        # print("-----------------------------------")
-        # print(source_code[sub_node.start_byte:sub_node.end_byte])
-        # for sub_sub_node in sub_node.children:
-        #     print("---------------------------")
-        #     print(sub_sub_node.type)
-        #     print(source_code[sub_sub_node.start_byte:sub_sub_node.end_byte])
-        # print("-----------------------------------")
-        # print(source_code[sub_node.start_byte:sub_node.end_byte])
-        # if sub_node.type != "function_declarator":
-        #     continue
-        # for sub_sub_node in sub_node.children:
-        #     if sub_sub_node.type == "identifier":
-        #         print(source_code[sub_sub_node.start_byte:sub_sub_node.end_byte])
-
-
-# for node in root.children:
-#     if node.type == "function_definition":
-#         print(source_code[node.start_byte:node.end_byte])
-        # for sub_node in node.children:
-        #     for sub_sub_node in sub_node.children:
-        #         if sub_sub_node.type == "parameter_list":
-        #             for sub4node in sub_sub_node.children:
-        #                 if sub4node.type == "parameter_declaration":
-        #                     idenNode = find_nodes(sub4node, "identifier")[0]
-        #                     print(source_code[idenNode.start_byte:idenNode.end_byte])
-
-
-
-    #     for sub_child in node.children:
-    #
-    #         if sub_child.type == "compound_statement":
-    #             # print(sub_child.type)
-    #             for subsubchild in sub_child.children:
-    #                 if subsubchild.type == "declaration":
-    #                     # print(sub_child.type)
-    #                     for subnode in subsubchild.children:
-    #                         print(subnode.type)
-    #                 # if sub_sub_child.type == "expression_statement":
-    #                 #     for sub_sub_sub_child in sub_sub_child.children:
-    #                 #         for sub_node in sub_sub_sub_child.children:
-    #                 #             if sub_node.type == "argument_list":
-    #                 #                 for sub_sub_node in sub_node.children:
-    #                 #                     print(sub_sub_node.type)
-    #
-    #
-    #
-    #
-    #                         # if sub_sub_child.type == "if_statement":
-    #                         #     print(sub_sub_child.type)
-    #                         #     print(source_code[sub_sub_child.start_byte:sub_sub_child.end_byte])
-    #
-    #                 # if sub_child.type == "function_declarator":
-    #                 #     # print(sub_child.type)
-    #                 #     # print(source_code[sub_child.start_byte:sub_child.end_byte])
-    #                 #     for sub_sub_children in sub_child.children:
-    #                 #         # print(sub_sub_children.type)
-    #                 #         if sub_sub_children.type == "identifier":
-    #                 #             print(source_code[sub_sub_children.start_byte:sub_sub_children.end_byte])
-    #                 #         # if sub_sub_children.type == "parameter_list":
-    #                 #         #     for para_node in sub_sub_children.children:
-    #                 #         #         if para_node.type not in {"(", ")", ","}:
-    #                 #         #             for para_sub_node in para_node.children:
-    #                 #         #                 if para_sub_node.type == "identifier":
-    #                 #         #                     print(para_sub_node.type)
-    #                 #         #                     print(source_code[para_sub_node.start_byte:para_sub_node.end_byte])
-
-
+# # Extract the name info and line number
+# lines = []
+# for node in nodes:
+#     is_src_node = False
+#     for child in node.children:
+#         if (
+#                 child.type == "number_literal"
+#                 and source_code[child.start_byte: child.end_byte] in {"0", "0.0", "0.0f", "0.0F"}
+#         ):
+#             is_src_node = True
+#         if child.type == "call_expression":
+#             for sub_child in child.children:
+#                 if sub_child.type == "identifier":
+#                     function_name = source_code[sub_child.start_byte:sub_child.end_byte]
+#                     if function_name in {"atoi", "atof"}:
+#                         is_src_node = True
+#                         break
+#     if is_src_node:
+#         for child in node.children:
+#             if child.type == "identifier":
+#                 name = source_code[child.start_byte: child.end_byte]
+#                 line_number = source_code[: child.start_byte].count("\n") + 1
+#                 lines.append((name, line_number))
+#                 print(name, line_number)
