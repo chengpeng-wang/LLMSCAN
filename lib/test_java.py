@@ -30,14 +30,14 @@ with open("java_demo_class.java", "r") as file:
 tree = parser.parse(bytes(source_code, "utf8"))
 
 root = tree.root_node
-methods = []
+functions = []
 
 for node in root.children:
     if node.type == "class_declaration":
         for child_node in node.children:
             if child_node.type == "class_body":
                 for child_child_node in child_node.children:
-                    if child_child_node.type == "method_declaration":
+                    if child_child_node.type == "function_declaration":
                         targets = find_nodes(child_child_node, "call_expression")
                         for target in targets:
                             is_sink_function = False

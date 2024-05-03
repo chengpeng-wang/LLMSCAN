@@ -1,0 +1,9 @@
+{
+    "response": {
+        "analyzed code": "1  static void fooxx()\n2  {\n3      float data;\n4      \n5      data = 0.0F;\n6      \n7      data = 2.0F;\n8      {\n9          \n10          int result = (int)(100.0 / data);\n11          printIntLine(result);\n12      }\n13  }\n14  void CWE369_Divide_by_Zero__float_connect_socket_01_foo()\n15  {\n16      fooxx();\n17      fooyy();\n18  }\n19  ",
+        "response": "-------------BEGIN REPORT----------------\nThere is 1 bug(s) in the program:\n- Bug 1, [Explanation, In the file provided, the value of data at line 5 is assigned with the literal 0.0F. This zero value is then used as the divisor at line 10, causing a divide-by-zero bug at line 10.], [Trace: (Line 5, is_zero(data)), (Line 10, is_zero(data))]\n---------------END REPORT----------------",
+        "all program size": 23,
+        "input_token_cost": 0,
+        "output_token_cost": 0
+    }
+}

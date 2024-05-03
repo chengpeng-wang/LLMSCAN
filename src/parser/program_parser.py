@@ -55,24 +55,23 @@ class TSParser:
     TSParser class for extracting information from Java files using tree-sitter.
     """
 
-    def __init__(self, c_file_path: str) -> None:
+    def __init__(self, code_in_projects: Dict[str, str]) -> None:
         """
-        Initialize TSParser with a java file path
+        Initialize TSParser with a collection of C files.
         :param c_file_path: The path of a C file.
         """
-        self.c_file_path = c_file_path
-        self.methods = {}
+        self.code_in_projects = code_in_projects
+        self.functions = {}
         self.functionToFile = {}
 
         cwd = Path(__file__).resolve().parent.absolute()
         TSPATH = cwd / "../../lib/build/"
         language_path = TSPATH / "my-languages.so"
-        # Load the Java language
-        self.java_lang = Language(str(language_path), "c")
+        self.c_lang = Language(str(language_path), "c")
 
         # Initialize the parser
         self.parser = tree_sitter.Parser()
-        self.parser.set_language(self.java_lang)
+        self.parser.set_language(self.c_lang)
 
     def parse_function_info(
         self,
@@ -81,7 +80,7 @@ class TSParser:
         tree: tree_sitter.Tree,
     ) -> None:
         """
-        Extract class declaration info: class name, fields, and methods
+        Extract class declaration info: class name, fields, and functions
         :param file_path: The path of the Java file.
         :param source_code: The content of the source code
         :param package_name: The package name
@@ -90,36 +89,35 @@ class TSParser:
         all_function_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
         for node in all_function_nodes:
             # get function name
-            method_name = ""
+            function_name = ""
             for sub_node in node.children:
                 if sub_node.type != "function_declarator":
                     continue
                 for sub_sub_node in sub_node.children:
                     if sub_sub_node.type == "identifier":
-                        method_name = source_code[sub_sub_node.start_byte:sub_sub_node.end_byte]
+                        function_name = source_code[sub_sub_node.start_byte:sub_sub_node.end_byte]
                         break
-                if method_name != "":
+                if function_name != "":
                     break
 
-            method_code = source_code[node.start_byte : node.end_byte]
+            function_code = source_code[node.start_byte : node.end_byte]
             start_line_number = source_code[: node.start_byte].count("\n") + 1
             end_line_number = source_code[: node.end_byte].count("\n") + 1
-            method_id = len(self.methods) + 1
-            self.methods[method_id] = (
-                method_name,
-                method_code,
+            function_id = len(self.functions) + 1
+            self.functions[function_id] = (
+                function_name,
+                function_code,
                 start_line_number,
                 end_line_number,
             )
-            self.functionToFile[method_id] = file_path
+            self.functionToFile[function_id] = file_path
         return
 
-    def extract_single_file(self, file_path, source_code: str) -> None:
-        # Parse the Java code
-        tree = self.parser.parse(bytes(source_code, "utf8"))
-        self.parse_function_info(
-            file_path, source_code, tree
-        )
+    def parse_project(self) -> None:
+        for c_file_path in self.code_in_projects:
+            source_code = self.code_in_projects[c_file_path]
+            tree = self.parser.parse(bytes(source_code, "utf8"))
+            self.parse_function_info(c_file_path, source_code, tree)
         return
 
 
@@ -130,36 +128,28 @@ class TSAnalyzer:
 
     def __init__(
         self,
-        c_file_path: str,
-        original_code: str,
-        analyzed_code: str,
-        support_files: Dict[str, str],
+        code_in_projects: Dict[str, str],
     ) -> None:
         """
         Initialize TSParser with the project path.
         Currently we only analyze a single java file
         :param c_file_path: The path of a c file
         """
-        self.c_file_path = c_file_path
-        self.ts_parser = TSParser(c_file_path)
-        self.original_code = original_code
-        self.analyzed_code = analyzed_code
-        self.support_files = support_files
-
-        self.ts_parser.extract_single_file(self.c_file_path, self.analyzed_code)
+        self.ts_parser = TSParser(code_in_projects)
+        self.ts_parser.parse_project()
 
         self.environment = {}
         self.caller_callee_map = {}
         self.callee_caller_map = {}
 
-        print(len(self.ts_parser.methods))
-        for method_id in self.ts_parser.methods:
-            (name, code, start_line_number, end_line_number) = self.ts_parser.methods[method_id]
+        print(len(self.ts_parser.functions))
+        for function_id in self.ts_parser.functions:
+            (name, code, start_line_number, end_line_number) = self.ts_parser.functions[function_id]
             print(name)
 
-        for function_id in self.ts_parser.methods:
+        for function_id in self.ts_parser.functions:
             (name, function_code, start_line_number, end_line_number) = (
-                self.ts_parser.methods[function_id]
+                self.ts_parser.functions[function_id]
             )
             current_function = Function(
                 function_id, name, function_code, start_line_number, end_line_number
@@ -175,10 +165,10 @@ class TSAnalyzer:
         for callee_id in self.callee_caller_map:
             for caller_id in self.callee_caller_map[callee_id]:
                 (callee_name, _, _, _) = (
-                    self.ts_parser.methods[callee_id]
+                    self.ts_parser.functions[callee_id]
                 )
                 (caller_name, _, _, _) = (
-                    self.ts_parser.methods[caller_id]
+                    self.ts_parser.functions[caller_id]
                 )
                 print(callee_name, caller_name)
 
@@ -190,19 +180,19 @@ class TSAnalyzer:
         Collect all the main functions, which are ready for analysis
         :return: a list of ids indicating main functions
         """
-        # self.methods: Dict[int, (str, str)] = {}
+        # self.functions: Dict[int, (str, str)] = {}
         main_ids = []
-        for method_id in self.ts_parser.methods:
-            (name, code, start_line_number, end_line_number) = self.ts_parser.methods[
-                method_id
+        for function_id in self.ts_parser.functions:
+            (name, code, start_line_number, end_line_number) = self.ts_parser.functions[
+                function_id
             ]
             if code.count("\n") < 2:
                 continue
             if name in {"main"}:
-                main_ids.append(method_id)
+                main_ids.append(function_id)
         return main_ids
 
-    def find_all_nodes(root_node: tree_sitter.Node) -> List[tree_sitter.Node]:
+    def find_all_nodes(self, root_node: tree_sitter.Node) -> List[tree_sitter.Node]:
         if root_node is None:
             return []
         nodes = [root_node]
@@ -222,36 +212,36 @@ class TSAnalyzer:
         return nodes
 
     def find_callee(
-        self, method_id: int, source_code: str, call_expr_node: tree_sitter.Node
+        self, function_id: int, source_code: str, call_expr_node: tree_sitter.Node
     ) -> List[int]:
         """
-        Find callees that invoked by a specific method.
+        Find callees that invoked by a specific function.
         Attention: call_site_node should be derived from source_code directly
-        :param method_id: caller function id
+        :param function_id: caller function id
         :param file_path: the path of the file containing the caller function
         :param source_code: the content of the source file
         :param call_site_node: the node of the call site. The type is 'call_expression'
         :return the list of the ids of called functions
         """
         assert call_expr_node.type == "call_expression"
-        method_name = ""
-        method_name = source_code[call_expr_node.start_byte : call_expr_node.end_byte]
+        function_name = ""
+        function_name = source_code[call_expr_node.start_byte : call_expr_node.end_byte]
         for sub_child in call_expr_node.children:
             if sub_child.type == "identifier":
-                method_name = source_code[sub_child.start_byte:sub_child.end_byte]
+                function_name = source_code[sub_child.start_byte:sub_child.end_byte]
                 break
 
-        (caller_name, _, _, _) = self.ts_parser.methods[method_id]
-        print("caller:", caller_name, "callee:", method_name)
+        (caller_name, _, _, _) = self.ts_parser.functions[function_id]
+        print("caller:", caller_name, "callee:", function_name)
 
         callee_ids = []
-        for method_id in self.ts_parser.functionToFile:
+        for function_id in self.ts_parser.functionToFile:
             # Maybe too conservative
             (name, code, start_line_number, end_line_number) = (
-                self.ts_parser.methods[method_id]
+                self.ts_parser.functions[function_id]
             )
-            if name == method_name:
-                callee_ids.append(method_id)
+            if name == function_name:
+                callee_ids.append(function_id)
         return callee_ids
 
     def find_if_statements(self, source_code, root_node) -> Dict[Tuple, Tuple]:

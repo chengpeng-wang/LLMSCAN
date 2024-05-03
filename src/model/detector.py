@@ -23,11 +23,16 @@ class Detector:
 
     def extract_detection_scopes(self, is_on_demand: bool = True):
         if not is_on_demand:
-            with open(self.ts_analyzer.c_file_path, "r") as file:
-                source_code = file.read()
-                analyze_code = obfuscate(source_code)
-            function_ids = List[self.ts_analyzer.environment.keys()]
-            return [(function_ids, analyze_code)]
+            analyzed_code = ""
+            start_end_lines = {}
+            last_line_number = 0
+            for function_id in self.ts_analyzer.ts_parser.functions:
+                function_content = self.ts_analyzer.ts_parser.functions[function_id]
+                analyzed_code += function_content + "\n"
+                new_last_line_number = analyzed_code.count("\n")
+                start_end_lines[function_id] = (last_line_number + 1, new_last_line_number)
+                last_line_number = new_last_line_number
+            return [(start_end_lines, analyzed_code)]
 
         function_srcs_dict = {}
         function_sinks_dict = {}
@@ -41,25 +46,25 @@ class Detector:
 
         scope_str_sets = set([])
         scopes = []
-        for (function_ids, analyze_code) in self.extract_top_down_detection_scopes(function_srcs_dict, function_sinks_dict):
-            scope_str = str(function_ids)
+        for (start_end_lines, analyze_code) in self.extract_top_down_detection_scopes(function_srcs_dict, function_sinks_dict):
+            scope_str = str(sorted(list(start_end_lines.keys())))
             if scope_str not in scope_str_sets:
-                scopes.append((function_ids, analyze_code))
+                scopes.append((start_end_lines, analyze_code))
                 scope_str_sets.add(scope_str)
 
-        for (function_ids, analyze_code) in self.extract_bottom_up_detection_scopes(function_srcs_dict, function_sinks_dict):
-            scope_str = str(function_ids)
+        for (start_end_lines, analyze_code) in self.extract_bottom_up_detection_scopes(function_srcs_dict, function_sinks_dict):
+            scope_str = str(sorted(list(start_end_lines.keys())))
             if scope_str not in scope_str_sets:
-                scopes.append((function_ids, analyze_code))
+                scopes.append((start_end_lines, analyze_code))
                 scope_str_sets.add(scope_str)
+
         print(len(scopes))
-        for (function_ids, analyze_code) in scopes:
-            print(function_ids)
-            print(analyze_code)
-            for function_id in function_ids:
-                print(self.ts_analyzer.environment[function_id].function_name)
-            print("\n")
-        exit(0)
+        for (start_end_lines, analyze_code) in scopes:
+            print("--------------------------------------------------")
+            print(add_line_numbers(analyze_code))
+            for function_id in start_end_lines:
+                print(self.ts_analyzer.environment[function_id].function_name, start_end_lines[function_id])
+            print("--------------------------------------------------\n")
         return scopes
 
     def extract_top_down_detection_scopes(self, function_srcs_dict, function_sinks_dict):
@@ -80,13 +85,16 @@ class Detector:
                 top_down_call_stacks.extend(single_top_down_call_stack)
 
         for call_stack in top_down_call_stacks:
-            function_ids = []
-            analyze_code = ""
+            analyzed_code = ""
+            start_end_lines = {}
+            last_line_number = 0
             for function_id in call_stack:
-                function_ids.append(function_id)
-                analyze_code += self.ts_analyzer.environment[function_id].function_code + "\n"
-            function_ids = sorted(function_ids)
-            scopes.append((function_ids, analyze_code))
+                function_content = self.ts_analyzer.environment[function_id].function_code
+                analyzed_code += function_content + "\n"
+                new_last_line_number = analyzed_code.count("\n")
+                start_end_lines[function_id] = (last_line_number + 1, new_last_line_number)
+                last_line_number = new_last_line_number
+            scopes.append((start_end_lines, analyzed_code))
         return scopes
 
     def extract_bottom_up_detection_scopes(self, function_srcs_dict, function_sinks_dict):
@@ -107,22 +115,24 @@ class Detector:
                 bottom_up_call_stacks.extend(single_bottom_up_call_stack)
 
         for call_stack in bottom_up_call_stacks:
-            function_ids = []
-            analyze_code = ""
+            analyzed_code = ""
+            start_end_lines = {}
+            last_line_number = 0
             for function_id in call_stack:
-                function_ids.append(function_id)
-                analyze_code += self.ts_analyzer.environment[function_id].function_code + "\n"
-            function_ids = sorted(function_ids)
-            scopes.append((function_ids, analyze_code))
+                function_content = self.ts_analyzer.ts_parser.functions[function_id]
+                analyzed_code += function_content + "\n"
+                new_last_line_number = analyzed_code.count("\n")
+                start_end_lines[function_id] = (last_line_number + 1, new_last_line_number)
+                last_line_number = new_last_line_number
+            scopes.append((start_end_lines, analyzed_code))
         return scopes
 
     def start_run_model(
         self,
-        file_name: str,
-        json_file_name: str,
         log_file_path: str,
         analyzed_code: str,
-        code_in_support_files: Dict[str, str]
+        project_name: str,
+        scope_id: int,
     ):
         with open(
             Path(__file__).resolve().parent.parent / "prompt" / self.spec_file_name,
@@ -134,16 +144,8 @@ class Detector:
         message += "\n".join(spec["output_constraints"]) + "\n"
         message += "\n".join(spec["analysis_examples"]) + "\n"
 
-        program = ""
-        for support_file in code_in_support_files:
-            program += "The following is the file " + support_file + ":\n"
-            program += "```\n" + code_in_support_files[support_file] + "\n```\n\n"
-        program += (
-            "The following is the file " + file_name[file_name.rfind("/") + 1 :] + ":\n"
-        )
-
         analyzed_code = add_line_numbers(analyzed_code)
-        program += "```\n" + analyzed_code + "\n```\n\n"
+        program = "```\n" + analyzed_code + "\n```\n\n"
 
         message += "\n".join(spec["meta_prompts_without_reflection"]) + "\n"
         message = message.replace("<PROGRAM>", program)
@@ -160,8 +162,6 @@ class Detector:
         debug_print("------------------------------")
         debug_print(response)
         debug_print("------------------------------")
-        debug_print(file_name)
-        debug_print("------------------------------")
         output_results = {
             "analyzed code": analyzed_code,
             "response": response,
@@ -170,7 +170,7 @@ class Detector:
             "output_token_cost": output_token_cost,
         }
 
-        with open(log_file_path + "/" + json_file_name + ".json", "w") as file:
+        with open(log_file_path + "/" + project_name + "_" + str(scope_id) + ".json", "w") as file:
             json.dump({"response": output_results}, file, indent=4)
         return response
 

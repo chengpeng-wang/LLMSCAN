@@ -9,19 +9,16 @@ class BatchRun:
     def __init__(
         self,
         spec_file: str,
-        project_name: str,
+        project_path: str,
         inference_model_name: str,
         inference_key_str: str,
         validation_model_name: str,
         validation_key_str: str,
-        analysis_mode: str,
         pipeline_mode: str
     ):
         self.spec_file = spec_file
-        self.project_name = project_name
-        self.simplified_project_name = self.project_name + "_simplified"
-        self.all_c_files = []
-        self.all_single_files = []
+        self.project_path = project_path
+        self.all_c_files = {}
 
         self.inference_model_name = inference_model_name
         self.inference_key_str = inference_key_str
@@ -29,88 +26,19 @@ class BatchRun:
         self.validation_key_str = validation_key_str
 
         self.batch_run_statistics = {}
-        self.code_in_support_files = {}
-        cwd = Path(__file__).resolve().parent.parent.absolute()
-        support_dir = str(
-            cwd / "benchmark/C/" / self.simplified_project_name / "testcasesupport"
-        )
-        for root, dirs, files in os.walk(support_dir):
+        for root, dirs, files in os.walk(project_path):
             for file in files:
-                with open(root + "/" + file, "r") as support_file:
-                    code_in_support_file = support_file.read()
-                    self.code_in_support_files[file] = obfuscate(
-                        code_in_support_file
-                    )
-        self.analysis_mode = analysis_mode
+                with open(root + "/" + file, "r") as c_file:
+                    c_file_content = c_file.read()
+                    self.all_c_files[root + "/" + file] = c_file_content
         self.pipeline_mode = pipeline_mode
-        return
-
-    def batch_transform_projects(self) -> None:
-        cwd = Path(__file__).resolve().parent.parent.absolute()
-        full_project_name = cwd / "benchmark/C/" / self.project_name
-        new_full_project_name = cwd / "benchmark/C/" / self.simplified_project_name
-
-        if os.path.exists(new_full_project_name):
-            shutil.rmtree(new_full_project_name)
-        shutil.copytree(full_project_name, new_full_project_name)
-
-        cluster_list = []
-        history = set([])
-        for root, dirs, files in os.walk(new_full_project_name):
-            for file in files:
-                if file.endswith(".c") and file.startswith("CWE"):
-                    if not re.search(r"_\d+[a-z]$", file.replace(".c", "")):
-                        continue
-                    file_path = os.path.join(root, file)
-                    match_str = file.replace(".c", "")[0:-1]
-                    if file_path in history:
-                        continue
-                    cluster = []
-                    cluster.append(file_path)
-                    history.add(file_path)
-
-                    for root2, dirs2, files2 in os.walk(new_full_project_name):
-                        for file2 in files2:
-                            if file2 in history or "_base.c" in file2:
-                                continue
-                            full_path2 = os.path.join(root2, file2)
-                            if file2.startswith(match_str) and (
-                                full_path2 not in history
-                            ):
-                                cluster.append(full_path2)
-                                history.add(full_path2)
-                    cluster_list.append(cluster)
-        for file_cluster in cluster_list:
-            is_class_split = True
-            for file_path in file_cluster:
-                trim_file_path = file_path.replace(".c", "")
-                if not re.search(r"_\d+[a-z]$", trim_file_path):
-                    is_class_split = False
-            if is_class_split:
-                transform_class_split_cluster_files(file_cluster)
-            else:
-                transform_function_split_cluster_files(file_cluster)
-
-        for root, dirs, files in os.walk(new_full_project_name):
-            for file in files:
-                if file.endswith(".c") and file.startswith("CWE"):
-                    if re.search(r"_\d+$", file.replace(".c", "")):
-                        self.all_c_files.append(os.path.join(root, file))
-
-        for full_c_file_path in self.all_c_files:
-            if re.search(r"_\d+$", full_c_file_path.replace(".c", "")):
-                self.all_single_files.append(full_c_file_path)
         return
 
     def start_batch_run(
         self,
-        main_test_file,
-        main_test_track: str,
-        project_mode: str,
         neural_check_strategy: Dict[str, bool],
         is_measure_token_cost: bool = False
     ) -> None:
-        self.batch_transform_projects()
         total_false_cnt_dict = {
             "syntactic_check": 0,
             "function_check": 0,
@@ -136,31 +64,19 @@ class BatchRun:
         if not os.path.exists(inference_log_dir_path):
             os.makedirs(inference_log_dir_path)
 
-        for c_file in self.all_single_files:
-            if project_mode == "single":
-                if main_test_file not in c_file:
-                    continue
-            elif project_mode == "partial":
-                if main_test_track not in c_file:
-                    continue
-
-            print(c_file)
-            total_cnt += 1
-            print("Analyze ID: ", total_cnt)
-
-            pipeline = Pipeline(
-                c_file,
-                self.code_in_support_files,
-                self.inference_model_name,
-                self.inference_key_str,
-                self.validation_model_name,
-                self.validation_key_str,
-                self.spec_file,
-                self.analysis_mode,
-                self.pipeline_mode
-            )
-            pipeline.start_detection()
-            # pipeline.start_sanitization(neural_check_strategy)
+        project_name = self.project_path.split("/")[-1]
+        pipeline = Pipeline(
+            project_name,
+            self.all_c_files,
+            self.inference_model_name,
+            self.inference_key_str,
+            self.validation_model_name,
+            self.validation_key_str,
+            self.spec_file,
+            self.pipeline_mode
+        )
+        pipeline.start_detection()
+        # pipeline.start_sanitization(neural_check_strategy)
         return
 
 
@@ -173,20 +89,6 @@ def run_dev_mode():
         "juliet-test-suite-APT",
     ]
     specs = ["dbz.json", "npd.json", "xss.json", "ci.json", "apt.json"]
-    main_test_files = [
-        "CWE369_Divide_by_Zero__float_connect_socket_02",
-        "CWE476_NULL_Pointer_Dereference__StringBuilder_07",
-        "CWE80_XSS__Servlet_URLConnection_75",
-        "CWE78_OS_Command_Injection__connect_tcp_06",
-        "CWE36_Absolute_Path_Traversal__connect_tcp_14",
-    ]
-    main_test_tracks = [
-        "CWE369_Divide_by_Zero__float_connect_socket",
-        "CWE476_NULL_Pointer_Dereference__StringBuilder",
-        "CWE80_XSS__Servlet_URLConnection",
-        "CWE78_OS_Command_Injection__connect_tcp",
-        "CWE36_Absolute_Path_Traversal__connect_tcp",
-    ]
 
     models = [
         "gpt-3.5-turbo-0125",
@@ -197,11 +99,14 @@ def run_dev_mode():
         "claude-3-opus-20240229",
     ]
 
-    modes = ["lazy", "eager"]
-
     # Parse command-line arguments
     parser = argparse.ArgumentParser()
 
+    parser.add_argument(
+        "--project-path",
+        type=str,
+        help="Specify the project path",
+    )
     parser.add_argument(
         "--bug-type",
         choices=["xss", "dbz", "npd", "ci", "apt"],
@@ -231,17 +136,6 @@ def run_dev_mode():
         ],
         help="Specify LLM model for Validation",
     )
-
-    parser.add_argument(
-        "--analysis-mode",
-        choices=["lazy", "eager"],
-        help="Specify analysis mode: lazy (load original reports) or eager (re-analyze)",
-    )
-    parser.add_argument(
-        "--project-mode",
-        choices=["single", "partial", "all"],
-        help="Specify the project mode: a single file, a single track, and all files",
-    )
     parser.add_argument(
         "--pipeline-mode",
         choices=["llmhalspot", "baseline"],
@@ -257,7 +151,6 @@ def run_dev_mode():
     parser.add_argument(
         "-intra-dataflow-check", action="store_true", help="Enable intra dataflow check"
     )
-
     parser.add_argument(
         "-measure-token-cost", action="store_true", help="Measure token cost"
     )
@@ -292,16 +185,10 @@ def run_dev_mode():
     elif args.bug_type == "apt":
         bug_type_id = 4
 
-    bug_type = bug_types[bug_type_id]
-    project_name = bug_types[bug_type_id]
-    main_test_file = main_test_files[bug_type_id]
-    main_test_track = main_test_tracks[bug_type_id]
-
+    project_path = args.project_path
     spec = specs[bug_type_id]
     inference_model = args.inference_model
     validation_model = args.validation_model
-    analysis_mode = args.analysis_mode
-    project_mode = args.project_mode
     pipeline_mode = args.pipeline_mode
 
     is_measure_token_cost = args.measure_token_cost
@@ -328,20 +215,16 @@ def run_dev_mode():
 
     batch_run = BatchRun(
         spec,
-        project_name,
+        project_path,
         inference_model,
         inference_model_key,
         validation_model,
         validation_model_key,
-        analysis_mode,
         pipeline_mode
     )
 
     # LLMHalSpot should be run before Baselines
     batch_run.start_batch_run(
-        main_test_file,
-        main_test_track,
-        project_mode,
         neural_check_strategy,
         is_measure_token_cost
     )

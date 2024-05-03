@@ -6,74 +6,58 @@ import json
 
 class Pipeline:
     def __init__(self,
-                 c_file,
-                 code_in_support_files,
+                 project_name,
+                 all_c_files,
                  inference_model_name,
                  inference_key_str,
                  validation_model_name,
                  validation_key_str,
                  spec_file,
-                 analysis_mode,
                  pipeline_mode):
-        self.c_file = c_file
-        self.code_in_support_files = code_in_support_files
+        self.project_name = project_name
+        self.all_c_files = all_c_files
         self.inference_model_name = inference_model_name
         self.inference_key_str = inference_key_str
         self.validation_model_name = validation_model_name
         self.validation_key_str = validation_key_str
         self.spec_file = spec_file
-        self.analysis_mode = analysis_mode
         self.pipeline_mode = pipeline_mode
         self.detection_result = []
 
-        # Load the source code from the C file
-        with open(self.c_file, "r") as file:
-            source_code = file.read()
-            new_code = obfuscate(source_code)
-        self.single_ts_analyzer = TSAnalyzer(self.c_file, source_code, new_code, self.code_in_support_files)
+        self.all_c_obfuscated_files = {}
+
+        for c_file_path in self.all_c_files:
+            self.all_c_obfuscated_files[c_file_path] = obfuscate(self.all_c_files[c_file_path])
+        self.ts_analyzer = TSAnalyzer(self.all_c_obfuscated_files)
         pass
 
     def start_detection(self):
-        case_name = self.c_file[self.c_file.rfind("/") + 1:].replace(".java", "")
         print("-----------------------------------------------------------")
-        print("Starting the detection ", case_name)
+        print("Start analyzing", self.project_name)
         print("-----------------------------------------------------------")
 
         log_dir_path = str(
             Path(__file__).resolve().parent.parent
-            / ("log/initial_detection/" + self.inference_model_name)
+            / ("log/initial_detection/" + self.inference_model_name + "/" + self.project_name)
         )
         if not os.path.exists(log_dir_path):
             os.makedirs(log_dir_path)
 
-        is_exist_inference = False
-        existing_json_file_names = set([])
-        for root, dirs, files in os.walk(log_dir_path):
-            for file in files:
-                if case_name in file:
-                    is_exist_inference = True
-                    json_file_name = root + "/" + file
-                    existing_json_file_names.add(json_file_name)
-
-        # Analyze the code with LLM or load existing response
-        if is_exist_inference and self.analysis_mode == "lazy":
-            return
-
         # Load the source code from the Java file
-        single_detector = Detector(self.single_ts_analyzer, self.inference_model_name, self.inference_key_str, self.spec_file)
-        json_file_name = self.c_file[self.c_file.rfind("/") + 1:].replace(".java", "")
+        single_detector = Detector(self.ts_analyzer, self.inference_model_name, self.inference_key_str, self.spec_file)
         detection_scopes = single_detector.extract_detection_scopes()
+        print(len(detection_scopes))
 
+        scope_id = 0
         for detection_scope in detection_scopes:
             (function_ids, analyze_code) = detection_scope
             iterative_cnt = 0
             while True:
                 output = single_detector.start_run_model(
-                    self.c_file,
-                    json_file_name,
                     log_dir_path,
                     analyze_code,
-                    self.code_in_support_files
+                    self.project_name,
+                    scope_id
                 )
                 bug_num, traces, first_report = parse_bug_report(output)
                 print(traces)
@@ -85,6 +69,7 @@ class Pipeline:
                     traces = []
                     break
             self.detection_result.append((function_ids, analyze_code, bug_num, traces))
+            scope_id += 1
         return
 
     def start_sanitization(self, neural_check_strategy):

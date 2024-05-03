@@ -29,14 +29,14 @@ with open("c_demo_program.c", "r") as file:
 tree = parser.parse(bytes(source_code, "utf8"))
 
 root = tree.root_node
-methods = {}
+functions = {}
 
 nodes = find_nodes(root, "call_expression")
 for node in nodes:
     for child in node.children:
         if child.type == "identifier":
-            method_name = source_code[child.start_byte: child.end_byte]
-            print(method_name)
+            function_name = source_code[child.start_byte: child.end_byte]
+            print(function_name)
 
 
 

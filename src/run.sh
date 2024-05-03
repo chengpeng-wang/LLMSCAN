@@ -19,8 +19,7 @@ python3 run_main.py \
   --bug-type=dbz \
   --inference-model=gpt-3.5-turbo-0125 \
   --validation-model=gpt-3.5-turbo-0125 \
-  --analysis-mode=eager \
-  --project-mode=single \
+  --project-path=/Users/xiangqian/Documents/CodeBase/LLMDFuzz/benchmark/C/demo_project \
   --pipeline-mode=llmhalspot \
   -intra-dataflow-check \
   -function-check \
