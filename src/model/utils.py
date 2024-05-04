@@ -22,9 +22,9 @@ os.environ["REPLICATE_API_TOKEN"] = "r8_cdX9L1f3rRSh3Ivi5eoZDU6Mr5lzeB21p9FQd"
 llama_model_name = "meta/codellama-70b-instruct:a279116fe47a0f65701a8817188601e2fe8f4b9e04a518789655ea7b995851bf"
 iterative_count_bound = 3
 
-# For checking bug reports
-shift_cnt_bound = 15
+# For dev options
 DEBUG = True
+scope_count_bound = 10
 
 
 def debug_print(*args, **kwargs):

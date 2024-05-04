@@ -52,24 +52,26 @@ class Pipeline:
 
         scope_id = 0
         for detection_scope in detection_scopes:
+            if scope_id >= scope_count_bound != -1:
+                break
             (start_end_lines, analyze_code) = detection_scope
-            iterative_cnt = 0
-            while True:
-                output = single_detector.start_run_model(
-                    log_dir_path,
-                    analyze_code,
-                    self.project_name,
-                    scope_id
-                )
-                bug_num, traces, first_report = parse_bug_report(output)
-                print(traces)
-                if len(traces) == bug_num:
-                    break
-                iterative_cnt += 1
-                if iterative_cnt > iterative_count_bound:
-                    bug_num = 0
-                    traces = []
-                    break
+            # iterative_cnt = 0
+
+            output = single_detector.start_run_model(
+                log_dir_path,
+                analyze_code,
+                self.project_name,
+                scope_id
+            )
+            bug_num, traces, first_report = parse_bug_report(output)
+            print(traces)
+            # if len(traces) == bug_num:
+            #     break
+            # iterative_cnt += 1
+            # if iterative_cnt > iterative_count_bound:
+            #     bug_num = 0
+            #     traces = []
+            #     break
             self.detection_result.append((start_end_lines, analyze_code, bug_num, traces))
             scope_id += 1
         return
