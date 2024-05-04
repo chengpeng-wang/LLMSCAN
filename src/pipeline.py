@@ -23,11 +23,13 @@ class Pipeline:
         self.spec_file = spec_file
         self.pipeline_mode = pipeline_mode
         self.detection_result = []
+        self.buggy_traces = []
 
         self.all_c_obfuscated_files = {}
 
         for c_file_path in self.all_c_files:
-            self.all_c_obfuscated_files[c_file_path] = obfuscate(self.all_c_files[c_file_path])
+            # self.all_c_obfuscated_files[c_file_path] = obfuscate(self.all_c_files[c_file_path])
+            self.all_c_obfuscated_files[c_file_path] = self.all_c_files[c_file_path]
         self.ts_analyzer = TSAnalyzer(self.all_c_obfuscated_files)
         pass
 
@@ -50,7 +52,7 @@ class Pipeline:
 
         scope_id = 0
         for detection_scope in detection_scopes:
-            (function_ids, analyze_code) = detection_scope
+            (start_end_lines, analyze_code) = detection_scope
             iterative_cnt = 0
             while True:
                 output = single_detector.start_run_model(
@@ -68,8 +70,29 @@ class Pipeline:
                     bug_num = 0
                     traces = []
                     break
-            self.detection_result.append((function_ids, analyze_code, bug_num, traces))
+            self.detection_result.append((start_end_lines, analyze_code, bug_num, traces))
             scope_id += 1
+        return
+
+    def finalize_traces(self):
+        for (start_end_lines, analyze_code, bug_num, traces) in self.detection_result:
+            for trace in traces:
+                finalized_trace = []
+                for (line_number, _) in trace:
+                    for function_id in start_end_lines:
+                        (start_line_number, end_line_number) = start_end_lines[function_id]
+                        if start_line_number <= line_number <= end_line_number:
+                            function_name = self.ts_analyzer.environment[function_id].function_name
+                            finalized_trace.append((function_id, function_name, line_number - start_line_number + 1))
+                            break
+                self.buggy_traces.append(finalized_trace)
+
+            log_dir_path = str(
+                Path(__file__).resolve().parent.parent
+                / ("log/initial_detection/" + self.inference_model_name + "/" + self.project_name)
+            )
+            with open(log_dir_path + "/finalized_traces.json", "w") as file:
+                json.dump({"finalized_traces": self.buggy_traces}, file, indent=4)
         return
 
     def start_sanitization(self, neural_check_strategy):
@@ -276,7 +299,8 @@ class Pipeline:
 
         with open(self.c_file, "r") as file:
             source_code = file.read()
-            new_code = obfuscate(source_code)
+            # new_code = obfuscate(source_code)
+            new_code = source_code
             lined_new_code = add_line_numbers(new_code)
 
         assert len(existing_json_file_names) == 1

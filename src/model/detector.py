@@ -40,9 +40,19 @@ class Detector:
         for function_id in self.ts_analyzer.environment:
             function = self.ts_analyzer.environment[function_id]
             sources = find_dbz_src(function.function_code, function.parse_tree.root_node)
-            function_srcs_dict[function_id] = sources
+            if len(sources) != 0:
+                function_srcs_dict[function_id] = sources
             sinks = find_dbz_sink(function.function_code, function.parse_tree.root_node)
-            function_sinks_dict[function_id] = sinks
+            if len(sinks) != 0:
+                function_sinks_dict[function_id] = sinks
+
+        for source_function_id in function_srcs_dict:
+            print("------------------------------------")
+            print(self.ts_analyzer.environment[source_function_id].function_code)
+
+        for sink_function_id in function_sinks_dict:
+            print("------------------------------------")
+            print(self.ts_analyzer.environment[sink_function_id].function_code)
 
         scope_str_sets = set([])
         scopes = []
@@ -58,7 +68,6 @@ class Detector:
                 scopes.append((start_end_lines, analyze_code))
                 scope_str_sets.add(scope_str)
 
-        print(len(scopes))
         for (start_end_lines, analyze_code) in scopes:
             print("--------------------------------------------------")
             print(add_line_numbers(analyze_code))
@@ -71,7 +80,7 @@ class Detector:
         scopes = []
         top_down_call_stacks = []
         for function_id in function_srcs_dict:
-            transitive_callees = self.compute_transitive_callee(function_id, self.ts_analyzer.caller_callee_map)
+            transitive_callees = self.compute_transitive_callees(function_id, self.ts_analyzer.caller_callee_map)
             for transitive_callee in transitive_callees:
                 if transitive_callee not in function_sinks_dict:
                     continue
@@ -119,7 +128,7 @@ class Detector:
             start_end_lines = {}
             last_line_number = 0
             for function_id in call_stack:
-                function_content = self.ts_analyzer.ts_parser.functions[function_id]
+                function_content = self.ts_analyzer.environment[function_id].function_code
                 analyzed_code += function_content + "\n"
                 new_last_line_number = analyzed_code.count("\n")
                 start_end_lines[function_id] = (last_line_number + 1, new_last_line_number)
@@ -174,56 +183,66 @@ class Detector:
             json.dump({"response": output_results}, file, indent=4)
         return response
 
-    def compute_transitive_callers(self, function_id: int, callee_caller_map) -> List[int]:
+    def compute_transitive_callers(self, function_id: int, callee_caller_map, visited=None) -> List[int]:
+        if visited is None:
+            visited = set()
         transitive_callers = []
-        if function_id not in callee_caller_map:
+        if function_id not in callee_caller_map or function_id in visited:
             return transitive_callers
+        visited.add(function_id)
         for caller_id in callee_caller_map[function_id]:
             transitive_callers.append(caller_id)
-            transitive_callers.extend(self.compute_transitive_callers(caller_id, callee_caller_map))
+            transitive_callers.extend(self.compute_transitive_callers(caller_id, callee_caller_map, visited))
         return transitive_callers
 
-    def compute_transitive_callee(self, function_id: int, caller_callee_map) -> List[int]:
+    def compute_transitive_callees(self, function_id: int, caller_callee_map, visited=None) -> List[int]:
+        if visited is None:
+            visited = set()
         transitive_callees = []
-        if function_id not in caller_callee_map:
+        if function_id not in caller_callee_map or function_id in visited:
             return transitive_callees
+        visited.add(function_id)
         for callee_id in caller_callee_map[function_id]:
             transitive_callees.append(callee_id)
-            transitive_callees.extend(self.compute_transitive_callee(callee_id, caller_callee_map))
+            transitive_callees.extend(self.compute_transitive_callees(callee_id, caller_callee_map, visited))
         return transitive_callees
 
-    def compute_bottom_up_call_stacks_from_src_to_sink(self,
-                                                       src_function_id: int,
-                                                       sink_function_id: int,
-                                                       callee_caller_map) -> List[List[int]]:
+    def compute_bottom_up_call_stacks_from_src_to_sink(self, src_function_id: int, sink_function_id: int,
+                                                       callee_caller_map, visited=None) -> List[List[int]]:
+        if visited is None:
+            visited = set()
         bottom_up_call_stacks = []
         if src_function_id == sink_function_id:
             return [[src_function_id]]
-        if src_function_id not in callee_caller_map:
+        if src_function_id not in callee_caller_map or src_function_id in visited:
             return bottom_up_call_stacks
+        visited.add(src_function_id)
         for caller_id in callee_caller_map[src_function_id]:
             if caller_id == sink_function_id:
                 bottom_up_call_stacks.append([caller_id])
             else:
-                for call_stack in self.compute_bottom_up_call_stacks_from_src_to_sink(caller_id, sink_function_id, callee_caller_map):
+                for call_stack in self.compute_bottom_up_call_stacks_from_src_to_sink(caller_id, sink_function_id,
+                                                                                      callee_caller_map, visited):
                     call_stack.append(caller_id)
                     bottom_up_call_stacks.append(call_stack)
         return bottom_up_call_stacks
 
-    def compute_top_down_call_stacks_from_src_to_sink(self,
-                                                      src_function_id: int,
-                                                      sink_function_id: int,
-                                                      caller_callee_map) -> List[List[int]]:
+    def compute_top_down_call_stacks_from_src_to_sink(self, src_function_id: int, sink_function_id: int,
+                                                      caller_callee_map, visited=None) -> List[List[int]]:
+        if visited is None:
+            visited = set()
         top_down_call_stacks = []
         if src_function_id == sink_function_id:
             return [[src_function_id]]
-        if src_function_id not in caller_callee_map:
+        if src_function_id not in caller_callee_map or src_function_id in visited:
             return top_down_call_stacks
+        visited.add(src_function_id)
         for callee_id in caller_callee_map[src_function_id]:
             if callee_id == sink_function_id:
                 top_down_call_stacks.append([callee_id])
             else:
-                for call_stack in self.compute_top_down_call_stacks_from_src_to_sink(callee_id, sink_function_id, caller_callee_map):
+                for call_stack in self.compute_top_down_call_stacks_from_src_to_sink(callee_id, sink_function_id,
+                                                                                     caller_callee_map, visited):
                     call_stack.append(callee_id)
                     top_down_call_stacks.append(call_stack)
         return top_down_call_stacks

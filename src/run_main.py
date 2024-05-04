@@ -28,7 +28,10 @@ class BatchRun:
         self.batch_run_statistics = {}
         for root, dirs, files in os.walk(project_path):
             for file in files:
+                if not file.endswith(".c"):
+                    continue
                 with open(root + "/" + file, "r") as c_file:
+                    print(root + "/" + file)
                     c_file_content = c_file.read()
                     self.all_c_files[root + "/" + file] = c_file_content
         self.pipeline_mode = pipeline_mode
@@ -76,6 +79,7 @@ class BatchRun:
             self.pipeline_mode
         )
         pipeline.start_detection()
+        pipeline.finalize_traces()
         # pipeline.start_sanitization(neural_check_strategy)
         return
 

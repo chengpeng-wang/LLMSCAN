@@ -19,7 +19,7 @@ python3 run_main.py \
   --bug-type=dbz \
   --inference-model=gpt-3.5-turbo-0125 \
   --validation-model=gpt-3.5-turbo-0125 \
-  --project-path=/Users/xiangqian/Documents/CodeBase/LLMDFuzz/benchmark/C/demo_project \
+  --project-path=/Users/xiangqian/Documents/CodeBase/LLMDFuzz/benchmark/C/METIS \
   --pipeline-mode=llmhalspot \
   -intra-dataflow-check \
   -function-check \
