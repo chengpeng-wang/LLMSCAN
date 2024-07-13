@@ -3,10 +3,8 @@ import shutil
 from pipeline.sfa import *
 import argparse
 
-from data.transform import *
 
-
-class BatchRun:
+class SFABatchScan:
     def __init__(
         self,
         project_path: str,
@@ -19,7 +17,7 @@ class BatchRun:
         self.inference_model_name = inference_model_name
         self.inference_key_str = inference_key_str
 
-        self.batch_run_statistics = {}
+        self.batch_scan_statistics = {}
         for root, dirs, files in os.walk(project_path):
             for file in files:
                 if not file.endswith(".c"):
@@ -29,23 +27,9 @@ class BatchRun:
                     c_file_content = c_file.read()
                     self.all_c_files[root + "/" + file] = c_file_content
         return
-    
 
-    def start_batch_run(self) -> None:
-        total_cnt = 0
-        inference_log_dir_path = str(
-            Path(__file__).resolve().parent / "../../log/initial_detection/"
-        )
-        if not os.path.exists(inference_log_dir_path):
-            os.makedirs(inference_log_dir_path)
-        inference_log_dir_path = str(
-            Path(__file__).resolve().parent
-            / "../../log/initial_detection"
-            / self.inference_model_name
-        )
-        if not os.path.exists(inference_log_dir_path):
-            os.makedirs(inference_log_dir_path)
 
+    def start_batch_scan(self) -> None:
         project_name = self.project_path.split("/")[-1]
         pipeline = SFAPipeline(
             project_name,
@@ -53,7 +37,7 @@ class BatchRun:
             self.inference_model_name,
             self.inference_key_str
         )
-        # pipeline.start_detection()
+        pipeline.start_detection()
         return
 
 
@@ -104,14 +88,14 @@ def run_dev_mode():
     else:
         inference_model_key = free_keys[0]
 
-    batch_run = BatchRun(
+    batch_scan = SFABatchScan(
         project_path,
         inference_model,
         inference_model_key
     )
 
     # LLMHalSpot should be run before Baselines
-    batch_run.start_batch_run()
+    batch_scan.start_batch_scan()
     return
 
 

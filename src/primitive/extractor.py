@@ -9,7 +9,6 @@ from typing import Tuple, List
 
 
 def find_dbz_src(source_code: str, root_node: tree_sitter.Node):
-    # TODO: This function should be synthesized automatically
     """
     Find source values for dbz detection
     :param source_code: The source code

@@ -8,7 +8,6 @@ sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__))))
 
 from typing import List, Tuple, Dict
 from enum import Enum
-from data.transform import *
 from pathlib import Path
 from time import *
 

@@ -25,6 +25,7 @@ class LLM:
         self.systemRole = "You are a experienced Java programmer and good at understanding Java programs."
         return
 
+
     def infer(
         self, message: str, is_measure_cost: bool = False
     ) -> Tuple[str, int, int]:
@@ -46,6 +47,7 @@ class LLM:
             0 if not is_measure_cost else len(self.encoding.encode(output))
         )
         return output, input_token_cost, output_token_cost
+
 
     def infer_with_gemini(self, message: str) -> str:
         def timeout_handler(signum, frame):
@@ -115,6 +117,7 @@ class LLM:
             if tryCnt > 5:
                 return ""
 
+
     def infer_claude(self, message: str) -> str:
         start_time = time.time()
 
@@ -159,6 +162,7 @@ class LLM:
                 received = False
             if tryCnt > 5:
                 return ""
+
 
     # Temporarily deprecated
     def infer_with_openai_model(self, message):
