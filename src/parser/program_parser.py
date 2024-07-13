@@ -10,6 +10,7 @@ from typing import List, Tuple, Dict
 from enum import Enum
 from data.transform import *
 from pathlib import Path
+from time import *
 
 
 class Function:
@@ -20,6 +21,7 @@ class Function:
         function_code: str,
         start_line_number: int,
         end_line_number: int,
+        function_node: tree_sitter.Node,
     ) -> None:
         """
         Record basic facts of the function
@@ -30,7 +32,7 @@ class Function:
         self.start_line_number = start_line_number
         self.end_line_number = end_line_number
 
-        self.parse_tree = None
+        self.parse_tree_root_node = function_node
         self.is_transformed = False
         self.is_parsed = False
 
@@ -40,10 +42,6 @@ class Function:
         # if statement info
         self.if_statements = {}
 
-    def set_parse_tree(self, parse_tree: tree_sitter.Tree) -> None:
-        self.parse_tree = parse_tree
-        self.is_parsed = True
-        return
 
     def set_call_sites(self, call_sites: List[Tuple[tree_sitter.Node, int]]) -> None:
         self.call_site_nodes = call_sites
@@ -61,8 +59,10 @@ class TSParser:
         :param c_file_path: The path of a C file.
         """
         self.code_in_projects = code_in_projects
-        self.functions = {}
+        self.functionRawDataDic = {}
+        self.functionNameToId = {}
         self.functionToFile = {}
+        self.fileContentDic = {}
 
         cwd = Path(__file__).resolve().parent.absolute()
         TSPATH = cwd / "../../lib/build/"
@@ -72,6 +72,7 @@ class TSParser:
         # Initialize the parser
         self.parser = tree_sitter.Parser()
         self.parser.set_language(self.c_lang)
+
 
     def parse_function_info(
         self,
@@ -100,18 +101,24 @@ class TSParser:
                 if function_name != "":
                     break
 
-            function_code = source_code[node.start_byte : node.end_byte]
+            # Initialize the raw data of a function
             start_line_number = source_code[: node.start_byte].count("\n") + 1
             end_line_number = source_code[: node.end_byte].count("\n") + 1
-            function_id = len(self.functions) + 1
-            self.functions[function_id] = (
+            function_id = len(self.functionRawDataDic) + 1
+            
+            self.functionRawDataDic[function_id] = (
                 function_name,
-                function_code,
                 start_line_number,
                 end_line_number,
+                node
             )
             self.functionToFile[function_id] = file_path
+            
+            if function_name not in self.functionNameToId:
+                self.functionNameToId[function_name] = set([])
+            self.functionNameToId[function_name].add(function_id)
         return
+    
 
     def parse_project(self) -> None:
         cnt = 0
@@ -121,6 +128,7 @@ class TSParser:
             source_code = self.code_in_projects[c_file_path]
             tree = self.parser.parse(bytes(source_code, "utf8"))
             self.parse_function_info(c_file_path, source_code, tree)
+            self.fileContentDic[c_file_path] = source_code
         return
 
 
@@ -146,37 +154,45 @@ class TSAnalyzer:
         self.callee_caller_map = {}
 
         cnt = 0
-        for function_id in self.ts_parser.functions:
-            print("Analyzing functions:", cnt, "/", len(self.ts_parser.functions))
+        for function_id in self.ts_parser.functionRawDataDic:
+            print("Analyzing functions:", cnt, "/", len(self.ts_parser.functionRawDataDic))
             cnt += 1
-            (name, function_code, start_line_number, end_line_number) = (
-                self.ts_parser.functions[function_id]
-            )
-            current_function = Function(
-                function_id, name, function_code, start_line_number, end_line_number
-            )
-            current_function.parse_tree = self.ts_parser.parser.parse(
-                bytes(function_code, "utf8")
-            )
-            current_function = self.extract_meta_data_in_single_function(
-                current_function
-            )
-            self.environment[function_id] = current_function
             
-        return
+            t1 = time()
+            (name, start_line_number, end_line_number, function_node) = (
+                self.ts_parser.functionRawDataDic[function_id]
+            )
+            
+            t2 = time()
+            file_content = self.ts_parser.fileContentDic[self.ts_parser.functionToFile[function_id]]
+            
+            t3 = time()
+            function_code = file_content[function_node.start_byte:function_node.end_byte]
+            
+            t4 = time()
+            current_function = Function(
+                function_id, name, function_code, start_line_number, end_line_number, function_node
+            )
+            
+            t5 = time()
+            current_function = self.extract_meta_data_in_single_function(current_function, file_content)
+            
+            t6 = time()
+            self.environment[function_id] = current_function
+            t7 = time()
+            
+            print("Time:", t2 - t1, t3 - t2, t4 - t3, t5 - t4, t6 - t5, t7 - t6)
 
+        cnt = 0
         for callee_id in self.callee_caller_map:
             for caller_id in self.callee_caller_map[callee_id]:
-                (callee_name, _, _, _) = (
-                    self.ts_parser.functions[callee_id]
-                )
-                (caller_name, _, _, _) = (
-                    self.ts_parser.functions[caller_id]
-                )
-                print(callee_name, caller_name)
-
-        self.main_ids = self.find_all_top_functions()
-        self.tmp_variable_count = 0
+                print(self.environment[caller_id].function_name, "-->", self.environment[callee_id].function_name)
+            cnt += 1 
+            if cnt > 100:
+                break
+        return
+        
+        
 
     def find_all_top_functions(self) -> List[int]:
         """
@@ -185,8 +201,8 @@ class TSAnalyzer:
         """
         # self.functions: Dict[int, (str, str)] = {}
         main_ids = []
-        for function_id in self.ts_parser.functions:
-            (name, code, start_line_number, end_line_number) = self.ts_parser.functions[
+        for function_id in self.ts_parser.functionRawDataDic:
+            (name, code, start_line_number, end_line_number) = self.ts_parser.functionRawDataDic[
                 function_id
             ]
             if code.count("\n") < 2:
@@ -234,18 +250,48 @@ class TSAnalyzer:
                 function_name = source_code[sub_child.start_byte:sub_child.end_byte]
                 break
 
-        (caller_name, _, _, _) = self.ts_parser.functions[function_id]
-        # print("caller:", caller_name, "callee:", function_name)
+        if function_name not in self.ts_parser.functionNameToId:
+            return []
+        else:
+            return self.ts_parser.functionNameToId[function_name]
+        
 
-        callee_ids = []
-        for function_id in self.ts_parser.functionToFile:
-            # Maybe too conservative
-            (name, code, start_line_number, end_line_number) = (
-                self.ts_parser.functions[function_id]
-            )
-            if name == function_name:
-                callee_ids.append(function_id)
-        return callee_ids
+
+    # def find_callee(
+    #     self, function_id: int, source_code: str, call_expr_node: tree_sitter.Node
+    # ) -> List[int]:
+    #     """
+    #     Find callees that invoked by a specific function.
+    #     Attention: call_site_node should be derived from source_code directly
+    #     :param function_id: caller function id
+    #     :param file_path: the path of the file containing the caller function
+    #     :param source_code: the content of the source file
+    #     :param call_site_node: the node of the call site. The type is 'call_expression'
+    #     :return the list of the ids of called functions
+    #     """
+    #     assert call_expr_node.type == "call_expression"
+    #     function_name = ""
+    #     function_name = source_code[call_expr_node.start_byte : call_expr_node.end_byte]
+    #     for sub_child in call_expr_node.children:
+    #         if sub_child.type == "identifier":
+    #             function_name = source_code[sub_child.start_byte:sub_child.end_byte]
+    #             # print(function_name)
+    #             # exit(0)
+    #             break
+
+    #     (caller_name, _, _, _) = self.ts_parser.functionRawDataDic[function_id]
+    #     # print("caller:", caller_name, "callee:", function_name)
+
+    #     callee_ids = []
+    #     for function_id in self.ts_parser.functionToFile:
+    #         # Maybe too conservative
+    #         (name, code, start_line_number, end_line_number) = (
+    #             self.ts_parser.functionRawDataDic[function_id]
+    #         )
+    #         if name == function_name:
+    #             callee_ids.append(function_id)
+    #     return callee_ids
+
 
     def find_if_statements(self, source_code, root_node) -> Dict[Tuple, Tuple]:
         targets = self.find_nodes_by_type(root_node, "if_statement")
@@ -297,24 +343,20 @@ class TSAnalyzer:
             # print("------------------\n")
         return if_statements
 
+
     def extract_meta_data_in_single_function(
-        self, current_function: Function
+        self, current_function: Function, file_content: str
     ) -> Function:
         """
         :param current_function: Function object
         :return: Function object with updated parse tree and call info
         """
-        tree = self.ts_parser.parser.parse(bytes(current_function.function_code, "utf8"))
-        return
-        current_function.set_parse_tree(tree)
-        root_node = tree.root_node
-
         # Identify call site info and maintain the environment
-        all_call_sites = self.find_nodes_by_type(root_node, "call_expression")
+        all_call_sites = self.find_nodes_by_type(current_function.parse_tree_root_node, "call_expression")
         white_call_sites = []
 
         for call_site_node in all_call_sites:
-            callee_ids = self.find_callee(current_function.function_id, current_function.function_code, call_site_node)
+            callee_ids = self.find_callee(current_function.function_id, file_content, call_site_node)
             if len(callee_ids) > 0:
                 # Update the call graph
                 for callee_id in callee_ids:
@@ -331,7 +373,7 @@ class TSAnalyzer:
         # compute the scope of the if-statements to guide the further path feasibility validation
         if_statements = self.find_if_statements(
             current_function.function_code,
-            current_function.parse_tree.root_node,
+            current_function.parse_tree_root_node,
         )
         current_function.if_statements = if_statements
         return current_function
@@ -355,7 +397,7 @@ class TSAnalyzer:
                 <= function.end_line_number
             ):
                 continue
-            all_nodes = TSAnalyzer.find_all_nodes(function.parse_tree.root_node)
+            all_nodes = TSAnalyzer.find_all_nodes(function.parse_tree_root_node)
             for node in all_nodes:
                 start_line = (
                     function.function_code[: node.start_byte].count("\n")

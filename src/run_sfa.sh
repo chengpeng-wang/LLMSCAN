@@ -17,7 +17,7 @@ source_bashrc
 
 # python3 scan_sfa.py \
 #   --inference-model=gpt-3.5-turbo-0125 \
-#   --project-path=/Users/xiangqian/Documents/CodeBase/LLMDFuzz/benchmark/C/openssl/crypto \
+#   --project-path=/Users/xiangqian/Documents/CodeBase/LLMDFuzz/benchmark/C/openssl \
 #   --global-temperature=0.0
 
 python3 scan_sfa.py \

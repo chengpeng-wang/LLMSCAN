@@ -25,7 +25,7 @@ class Detector:
     def extract_detection_sfa_scopes(self):
         print("Start extracting detection scopes")
         target_function_ids = {}
-        for function_id in self.ts_analyzer.ts_parser.functions:
+        for function_id in self.ts_analyzer.ts_parser.functionRawDataDic:
             function_root_node = self.ts_analyzer.environment[function_id].parse_tree.root_node
             function_code = self.ts_analyzer.environment[function_id].function_code
             all_call_sites = self.ts_analyzer.find_nodes_by_type(function_root_node, "call_expression")
@@ -64,8 +64,8 @@ class Detector:
             analyzed_code = ""
             start_end_lines = {}
             last_line_number = 0
-            for function_id in self.ts_analyzer.ts_parser.functions:
-                function_content = self.ts_analyzer.ts_parser.functions[function_id]
+            for function_id in self.ts_analyzer.ts_parser.functionRawDataDic:
+                function_content = self.ts_analyzer.ts_parser.functionRawDataDic[function_id]
                 analyzed_code += function_content + "\n"
                 new_last_line_number = analyzed_code.count("\n")
                 start_end_lines[function_id] = (last_line_number + 1, new_last_line_number)
