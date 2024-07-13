@@ -4,7 +4,7 @@ from model.detector import *
 import json
 
 
-class Pipeline:
+class ValueFlowPipeline:
     def __init__(self,
                  project_name,
                  all_c_files,

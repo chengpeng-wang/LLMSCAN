@@ -114,7 +114,10 @@ class TSParser:
         return
 
     def parse_project(self) -> None:
+        cnt = 0
         for c_file_path in self.code_in_projects:
+            print("Parsing file: ", cnt, "/", len(self.code_in_projects))
+            cnt += 1
             source_code = self.code_in_projects[c_file_path]
             tree = self.parser.parse(bytes(source_code, "utf8"))
             self.parse_function_info(c_file_path, source_code, tree)
@@ -142,12 +145,10 @@ class TSAnalyzer:
         self.caller_callee_map = {}
         self.callee_caller_map = {}
 
-        print(len(self.ts_parser.functions))
+        cnt = 0
         for function_id in self.ts_parser.functions:
-            (name, code, start_line_number, end_line_number) = self.ts_parser.functions[function_id]
-            print(name)
-
-        for function_id in self.ts_parser.functions:
+            print("Analyzing functions:", cnt, "/", len(self.ts_parser.functions))
+            cnt += 1
             (name, function_code, start_line_number, end_line_number) = (
                 self.ts_parser.functions[function_id]
             )
@@ -161,6 +162,8 @@ class TSAnalyzer:
                 current_function
             )
             self.environment[function_id] = current_function
+            
+        return
 
         for callee_id in self.callee_caller_map:
             for caller_id in self.callee_caller_map[callee_id]:
@@ -232,7 +235,7 @@ class TSAnalyzer:
                 break
 
         (caller_name, _, _, _) = self.ts_parser.functions[function_id]
-        print("caller:", caller_name, "callee:", function_name)
+        # print("caller:", caller_name, "callee:", function_name)
 
         callee_ids = []
         for function_id in self.ts_parser.functionToFile:
@@ -302,6 +305,7 @@ class TSAnalyzer:
         :return: Function object with updated parse tree and call info
         """
         tree = self.ts_parser.parser.parse(bytes(current_function.function_code, "utf8"))
+        return
         current_function.set_parse_tree(tree)
         root_node = tree.root_node
 

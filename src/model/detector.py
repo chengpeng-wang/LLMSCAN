@@ -20,6 +20,44 @@ class Detector:
         self.key = key
         self.model = LLM(self.online_model_name, self.key, 0)
         self.spec_file_name = spec_file_name
+        
+        
+    def extract_detection_sfa_scopes(self):
+        print("Start extracting detection scopes")
+        target_function_ids = {}
+        for function_id in self.ts_analyzer.ts_parser.functions:
+            function_root_node = self.ts_analyzer.environment[function_id].parse_tree.root_node
+            function_code = self.ts_analyzer.environment[function_id].function_code
+            all_call_sites = self.ts_analyzer.find_nodes_by_type(function_root_node, "call_expression")
+            is_target = False
+            for call_site in all_call_sites:
+                if function_code[call_site.start_byte:call_site.end_byte].find("BN_secure_new") != -1:
+                    is_target = True
+                if function_code[call_site.start_byte:call_site.end_byte].find("BN_free") != -1:
+                    is_target = False
+            if is_target:
+                target_function_ids[function_id] = self.ts_analyzer.environment[function_id].function_name
+        print("Finish extracting detection scopes")
+        return target_function_ids
+    
+    
+    def start_run_sfa_check(self, function_code: str):
+        prompt = """
+        Task: If a function BN_secure_new() is called, i.e., `p = BN_secure_new();`, then we have invoke BN_free(p) after the last use of p. 
+        Otherwise, please report a resource leak bug.
+        Please check the function body. If it violate the above rule, please report it as a resource bug.
+        Here is the function:
+        {function_code}
+        Please think step by step and give the answer in the following format:
+        Answer: [Your explanation]
+        Yes/No.
+        Specifically, the second line should contain Yes if there is a bug. Otherwise, it should contain No.
+        """
+        response, input_token_cost, output_token_cost = self.model.infer(prompt.replace("{function_code}", function_code), False)
+        print(response)
+        return response
+        
+        
 
     def extract_detection_scopes(self, is_on_demand: bool = True):
         if not is_on_demand:

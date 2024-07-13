@@ -1,0 +1,12 @@
+{
+    "1181": "bn_secure_new",
+    "2487": "",
+    "3006": "ossl_rsa_fips186_4_gen_prob_primes",
+    "3185": "ossl_rsa_multip_calc_product",
+    "3293": "rsa_multiprime_keygen",
+    "4000": "ecdsa_sign_setup",
+    "4016": "ossl_ec_key_fromdata",
+    "4045": "ossl_ec_generate_key_dhkem",
+    "4080": "ossl_ec_key_simple_oct2priv",
+    "4167": ""
+}

@@ -1,5 +1,6 @@
+import os
 import shutil
-from pipeline import *
+from pipeline.valueflow import *
 import argparse
 
 from data.transform import *
@@ -37,6 +38,7 @@ class BatchRun:
         self.pipeline_mode = pipeline_mode
         return
 
+
     def start_batch_run(
         self,
         neural_check_strategy: Dict[str, bool],
@@ -68,7 +70,7 @@ class BatchRun:
             os.makedirs(inference_log_dir_path)
 
         project_name = self.project_path.split("/")[-1]
-        pipeline = Pipeline(
+        pipeline = ValueFlowPipeline(
             project_name,
             self.all_c_files,
             self.inference_model_name,

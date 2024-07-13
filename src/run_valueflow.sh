@@ -15,7 +15,7 @@ source_bashrc
 #bug type: apt, ci, npd, xss, dbz
 #model: gpt-3.5-turbo-0125, gpt-4-turbo-preview, gemini, claude-3-haiku-20240307
 
-python3 run_main.py \
+python3 scan_valueflow.py \
   --bug-type=dbz \
   --inference-model=gpt-3.5-turbo-0125 \
   --validation-model=gpt-3.5-turbo-0125 \
@@ -26,7 +26,7 @@ python3 run_main.py \
   --global-temperature=0.0 \
   --self-consistency-k=1
 
-#python3 run_main.py \
+#python3 scan_valueflow.py \
 #  --bug-type=apt \
 #  --inference-model=gpt-3.5-turbo-0125 \
 #  --validation-model=gpt-3.5-turbo-0125 \
@@ -36,7 +36,7 @@ python3 run_main.py \
 #  -intra-dataflow-check \
 #  -function-check 2>&1 | tee ../log/console/console_gpt-3.5-turbo-0125_partial_CWE36_Absolute_Path_Traversal__console_readLine.txt
 #
-#python3 run_main.py \
+#python3 scan_valueflow.py \
 #  --bug-type=ci \
 #  --inference-model=gpt-3.5-turbo-0125 \
 #  --validation-model=gpt-3.5-turbo-0125 \
@@ -46,7 +46,7 @@ python3 run_main.py \
 #  -intra-dataflow-check \
 #  -function-check 2>&1 | tee ../log/console/console_gpt-3.5-turbo-0125_partial_CWE78_OS_Command_Injection__database.txt
 #
-#python3 run_main.py \
+#python3 scan_valueflow.py \
 #  --bug-type=npd \
 #  --inference-model=gpt-3.5-turbo-0125 \
 #  --validation-model=gpt-3.5-turbo-0125 \
@@ -56,7 +56,7 @@ python3 run_main.py \
 #  -intra-dataflow-check \
 #  -function-check 2>&1 | tee ../log/console/console_gpt-3.5-turbo-0125_partial_CWE476_NULL_Pointer_Dereference__binary_if.txt
 #
-#python3 run_main.py \
+#python3 scan_valueflow.py \
 #  --bug-type=xss \
 #  --inference-model=gpt-3.5-turbo-0125 \
 #  --validation-model=gpt-3.5-turbo-0125 \
@@ -66,7 +66,7 @@ python3 run_main.py \
 #  -intra-dataflow-check \
 #  -function-check 2>&1 | tee ../log/console/console_gpt-3.5-turbo-0125_partial_CWE80_XSS__CWE182_Servlet_connect_tcp.txt
 #
-#python3 run_main.py \
+#python3 scan_valueflow.py \
 #  --bug-type=dbz \
 #  --inference-model=gpt-3.5-turbo-0125 \
 #  --validation-model=gpt-3.5-turbo-0125 \
