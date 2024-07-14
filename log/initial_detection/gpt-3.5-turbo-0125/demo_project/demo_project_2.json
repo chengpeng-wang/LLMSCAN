@@ -1,9 +1,0 @@
-{
-    "response": {
-        "analyzed code": "1  static void goodG2B()\n2  {\n3      float data;\n4      /* Initialize data */\n5      data = 0.0F;\n6      /* FIX: Use a hardcoded number that won't a divide by zero */\n7      data = 2.0F;\n8      {\n9          /* POTENTIAL FLAW: Possibly divide by zero */\n10          int result = (int)(100.0 / data);\n11          printIntLine(result);\n12      }\n13  }\n14  void CWE369_Divide_by_Zero__float_connect_socket_01_good()\n15  {\n16      goodG2B();\n17      goodB2G();\n18  }\n19  ",
-        "response": "```\n-------------BEGIN REPORT----------------\nThere is 1 bug(s) in the program:\n- Bug 1, [Explanation: In the file provided, the value of data at line 5 is assigned with the literal 0.0F, and then reassigned to 2.0F at line 7. However, there is a potential divide-by-zero bug at line 10 where the division operation is performed with data.], [Trace: (Line 5, is_zero(data)), (Line 7, is_zero(data)), (Line 10, is_zero(data))]\n---------------END REPORT----------------\n```",
-        "all program size": 23,
-        "input_token_cost": 0,
-        "output_token_cost": 0
-    }
-}
