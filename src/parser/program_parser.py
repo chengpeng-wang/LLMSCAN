@@ -9,7 +9,6 @@ sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__))))
 from typing import List, Tuple, Dict
 from enum import Enum
 from pathlib import Path
-from time import *
 
 
 class Function:
@@ -156,31 +155,16 @@ class TSAnalyzer:
         for function_id in self.ts_parser.functionRawDataDic:
             print("Analyzing functions:", cnt, "/", len(self.ts_parser.functionRawDataDic))
             cnt += 1
-            
-            t1 = time()
             (name, start_line_number, end_line_number, function_node) = (
                 self.ts_parser.functionRawDataDic[function_id]
             )
-            
-            t2 = time()
             file_content = self.ts_parser.fileContentDic[self.ts_parser.functionToFile[function_id]]
-            
-            t3 = time()
             function_code = file_content[function_node.start_byte:function_node.end_byte]
-            
-            t4 = time()
             current_function = Function(
                 function_id, name, function_code, start_line_number, end_line_number, function_node
             )
-            
-            t5 = time()
             current_function = self.extract_meta_data_in_single_function(current_function, file_content)
-            
-            t6 = time()
             self.environment[function_id] = current_function
-            t7 = time()
-            
-            print("Time:", t2 - t1, t3 - t2, t4 - t3, t5 - t4, t6 - t5, t7 - t6)
 
         cnt = 0
         for callee_id in self.callee_caller_map:
@@ -192,7 +176,6 @@ class TSAnalyzer:
         return
         
         
-
     def find_all_top_functions(self) -> List[int]:
         """
         Collect all the main functions, which are ready for analysis
