@@ -99,6 +99,9 @@ class TSParser:
                 if function_name != "":
                     break
 
+            if function_name == "":
+                continue
+
             # Initialize the raw data of a function
             start_line_number = source_code[: node.start_byte].count("\n") + 1
             end_line_number = source_code[: node.end_byte].count("\n") + 1

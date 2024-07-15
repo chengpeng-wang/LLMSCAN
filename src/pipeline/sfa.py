@@ -21,36 +21,46 @@ class SFAPipeline:
     
 
     def start_detection(self):
-        return
-        print("-----------------------------------------------------------")
-        print("Start analyzing", self.project_name)
-        print("-----------------------------------------------------------")
-
         log_dir_path = str(
-            Path(__file__).resolve().parent.parent
+            Path(__file__).resolve().parent.parent.parent
             / ("log/sfa/" + self.project_name)
         )
         if not os.path.exists(log_dir_path):
             os.makedirs(log_dir_path)
 
-        # Load the source code from the Java file
-        detection_scopes = self.extract_detection_sfa_scopes()
+        probe_scope = {}
+
+        with open(Path(__file__).resolve().parent.parent.parent
+                  / "benchmark/C/sensitive_function.json", "r") as read_file:
+            sensitive_functions = json.load(read_file)
+
+        for sensitive_function in set(sensitive_functions["Linux"]):
+            print(sensitive_function)
+            # Load the source code from the Java file
+            detection_scopes = self.extract_detection_sfa_scopes(sensitive_function)
+            probe_scope[sensitive_function] = []
+            for function_id in detection_scopes:
+                probe_scope[sensitive_function].append(self.ts_analyzer.environment[function_id].function_name)
+        
+        with open(log_dir_path + "/probe_scope.json", 'w') as f:
+            json.dump(probe_scope, f, indent=4, sort_keys=True)
         return
     
     
-    def extract_detection_sfa_scopes(self):
+    def extract_detection_sfa_scopes(self, api_name: str):
         print("Start extracting detection scopes")
         target_function_ids = {}
         for function_id in self.ts_analyzer.ts_parser.functionRawDataDic:
-            function_root_node = self.ts_analyzer.environment[function_id].parse_tree.root_node
-            function_code = self.ts_analyzer.environment[function_id].function_code
+            function_root_node = self.ts_analyzer.environment[function_id].parse_tree_root_node
+            # function_code = self.ts_analyzer.environment[function_id].function_code
             all_call_sites = self.ts_analyzer.find_nodes_by_type(function_root_node, "call_expression")
             is_target = False
             for call_site in all_call_sites:
-                if function_code[call_site.start_byte:call_site.end_byte].find("BN_secure_new") != -1:
+                file_id = self.ts_analyzer.ts_parser.functionToFile[function_id]
+                file_content = self.ts_analyzer.ts_parser.fileContentDic[file_id]
+                if file_content[call_site.start_byte:call_site.end_byte].find(api_name + "(") != -1:
                     is_target = True
-                if function_code[call_site.start_byte:call_site.end_byte].find("BN_free") != -1:
-                    is_target = False
+                    break
             if is_target:
                 target_function_ids[function_id] = self.ts_analyzer.environment[function_id].function_name
         print("Finish extracting detection scopes")
