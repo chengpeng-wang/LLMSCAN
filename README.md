@@ -70,7 +70,7 @@ if sensitive_function != "mhi_alloc_controller":
     continue
 ```
 
-## More Programming Languages
+### More Programming Languages
 
 The framework is language-agnostic. To migrate the current C/C++ analysis to other programming languages, please refer to the grammar files in the corresponding Tree-sitter libraries and refactor the code in `parser/program_parser.py`. Basically, you only need to change the node types when invoking `find_nodes_by_type`.
 
