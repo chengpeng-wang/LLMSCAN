@@ -12,7 +12,7 @@ LLMSCAN is a tool designed to parse and analyze source code to instantiate LLM-b
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/LLMSCAN.git
+    git clone git@github.com:PurCL/LLMSCAN.git
     cd LLMSCAN
     ```
 
