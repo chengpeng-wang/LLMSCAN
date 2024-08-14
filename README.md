@@ -44,7 +44,7 @@ LLMSCAN is a tool designed to parse and analyze source code to instantiate LLM-b
 1. Prepare the project that you want to analyze. Here we use the Linux kernel as an example:
     ```sh
     cd benchmark
-    mkdir C
+    mkdir C && cd C
     git clone git@github.com:torvalds/linux.git
     ```
 
