@@ -2,14 +2,17 @@ import os
 import openai
 import google.generativeai as genai
 
-# Standard API
+# Standard OpenAI API
 standard_keys = os.environ.get("OPENAI_API_KEY").split(":")
 
-# Gemini key
+# Replicate API
 os.environ["REPLICATE_API_TOKEN"] = os.environ.get("REPLICATE_API_TOKEN")
+
+# Gemini API
 genai.configure(api_key=os.environ.get("GEMINI_KEY"))
 
+# Iterative count bound
 iterative_count_bound = 3
 
-# For dev options
+# Scope count bound (for development)
 scope_count_bound = 10

@@ -1,30 +1,29 @@
+# Imports
 from openai import *
+from model.utils import *
+from pathlib import Path
+from typing import Tuple
+import google.generativeai as genai
+import replicate
+import signal
 import sys
 import tiktoken
-from typing import Tuple
-from model.utils import *
 import time
-import signal
-from pathlib import Path
-import replicate
-import google.generativeai as genai
-
 
 class LLM:
     """
-    An online inference model using ChatGPT
+    An online inference model using different LLMs, including gemini, gpt-3.5, and gpt-4
     """
 
     def __init__(
         self, online_model_name: str, openai_key: str, temperature: float
     ) -> None:
         self.online_model_name = online_model_name
-        self.encoding = tiktoken.encoding_for_model("gpt-3.5-turbo-0125")
+        self.encoding = tiktoken.encoding_for_model("gpt-3.5-turbo-0125") # We only use gpt-3.5 to measure token cost
         self.openai_key = openai_key
         self.temperature = temperature
-        self.systemRole = "You are a experienced Java programmer and good at understanding Java programs."
+        self.systemRole = "You are a experienced C/C++ programmer and good at understanding C/C++ programs."
         return
-
 
     def infer(
         self, message: str, is_measure_cost: bool = False
@@ -46,8 +45,10 @@ class LLM:
         )
         return output, input_token_cost, output_token_cost
 
-
     def infer_with_gemini(self, message: str) -> str:
+        """
+        Infer using the Gemini model from Google Generative AI
+        """
         def timeout_handler(signum, frame):
             raise TimeoutError("ChatCompletion timeout")
 
@@ -115,8 +116,10 @@ class LLM:
             if tryCnt > 5:
                 return ""
 
-
     def infer_with_openai_model(self, message):
+        """
+        Infer using the OpenAI model
+        """
         def timeout_handler(signum, frame):
             raise TimeoutError("ChatCompletion timeout")
 
@@ -141,21 +144,12 @@ class LLM:
             time.sleep(2)
             try:
                 signal.alarm(100)  # Set a timeout of 100 seconds
-
-                # OpenAI version: 24.0
-                # Use OpenAI official APIs
                 client = OpenAI(api_key=standard_keys[0])
                 response = client.chat.completions.create(
                     model=self.online_model_name,
                     messages=model_input,
                     temperature=self.temperature,
                 )
-
-                # ## OpenAI version: 0.28.0
-                # openai.api_key = free_keys[0]
-                # response = openai.ChatCompletion.create(
-                #     model=self.online_model_name, messages=model_input, temperature=0
-                # )
 
                 signal.alarm(0)  # Cancel the timeout
                 output = response.choices[0].message.content

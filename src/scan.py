@@ -3,7 +3,6 @@ import argparse
 from model.utils import *
 from pipeline.apiscan import *
 
-
 class BatchScan:
     def __init__(
         self,
@@ -12,26 +11,30 @@ class BatchScan:
         inference_key_str: str,
         temperature: float
     ):
+        """
+        Initialize BatchScan object with project details.
+        """
         self.project_path = project_path
         self.all_c_files = {}
-
         self.inference_model_name = inference_model_name
         self.inference_key_str = inference_key_str
         self.temperature = temperature
-
         self.batch_scan_statistics = {}
+
+        # Load all .c files in the project path
         for root, dirs, files in os.walk(project_path):
             for file in files:
                 if not file.endswith(".c"):
                     continue
-                with open(root + "/" + file, "r") as c_file:
-                    print(root + "/" + file)
+                with open(os.path.join(root, file), "r") as c_file:
+                    print(os.path.join(root, file))
                     c_file_content = c_file.read()
-                    self.all_c_files[root + "/" + file] = c_file_content
-        return
-
+                    self.all_c_files[os.path.join(root, file)] = c_file_content
 
     def start_batch_scan(self) -> None:
+        """
+        Start the batch scan process.
+        """
         project_name = self.project_path.split("/")[-1]
         pipeline = APIScanPipeline(
             project_name,
@@ -41,12 +44,12 @@ class BatchScan:
             self.temperature
         )
         pipeline.start_detection()
-        return
-
 
 def run_dev_mode():
+    """
+    Run in development mode by parsing arguments and starting the batch scan.
+    """
     parser = argparse.ArgumentParser()
-
     parser.add_argument(
         "--project-path",
         type=str,
@@ -68,15 +71,10 @@ def run_dev_mode():
     )
 
     args = parser.parse_args()
-
     project_path = args.project_path
     inference_model = args.inference_model
     global_temperature = float(args.global_temperature)
-
-    if "gpt" in inference_model:
-        inference_model_key = standard_keys[0]
-    else:
-        inference_model_key = free_keys[0]
+    inference_model_key = standard_keys[0]
 
     batch_scan = BatchScan(
         project_path,
@@ -84,11 +82,7 @@ def run_dev_mode():
         inference_model_key,
         global_temperature
     )
-
-    # LLMHalSpot should be run before Baselines
     batch_scan.start_batch_scan()
-    return
-
 
 if __name__ == "__main__":
     run_dev_mode()

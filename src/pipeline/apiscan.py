@@ -1,10 +1,10 @@
+import json
+import os
 from parser.response_parser import *
 from parser.program_parser import *
 from prompt.apiscan_prompt import *
 from model.llm import *
-import json
-import os
-
+from pathlib import Path
 
 class APIScanPipeline:
     def __init__(self,
@@ -23,25 +23,22 @@ class APIScanPipeline:
         self.buggy_traces = []
         self.ts_analyzer = TSAnalyzer(self.all_c_files)
         self.model = LLM(self.inference_model_name, self.inference_key_str, self.temperature)
-        pass
-    
 
     def start_detection(self):
+        """
+        Start the detection process.
+        """
         log_dir_path = str(
-            Path(__file__).resolve().parent.parent.parent
-            / ("log/apiscan/" + self.project_name)
+            Path(__file__).resolve().parent.parent.parent / ("log/apiscan/" + self.project_name)
         )
         if not os.path.exists(log_dir_path):
             os.makedirs(log_dir_path)
 
         probe_scope = {}
-
         sensitive_functions = set(prompt_dict.keys())
         all_detection_scopes = {}
 
         for sensitive_function in set(sensitive_functions):
-            # Attention: We just detect the misuse of mhi_alloc_controller as an examples
-            # Detecting the misuse of other sensitive functions may cause huge token costs. BE CAREFUL!
             if sensitive_function != "mhi_alloc_controller":
                 continue
             print(sensitive_function)
@@ -55,7 +52,6 @@ class APIScanPipeline:
             json.dump(probe_scope, f, indent=4, sort_keys=True)
         print(probe_scope)
 
-        # Start detection. Currently we only detect intra-procedural bugs as demo
         report = {}
         for sensitive_function in all_detection_scopes:
             report[sensitive_function] = []
@@ -79,8 +75,11 @@ class APIScanPipeline:
             json.dump(report, f, indent=4, sort_keys=True)
         return
     
-    
     def extract_detection_scopes(self, api_name: str):
+        """
+        Extract detection scopes for a given API name.
+        """
+
         print("Start extracting detection scopes")
         target_function_ids = {}
         cnt = 0

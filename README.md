@@ -1,70 +1,99 @@
 # LLMSCAN
 
-## Reproduced Bug Report
+LLMSCAN is a tool designed to parse and analyze source code to instantiate LLM-based program analysis. Based on Tree-sitter, it provides functionality to identify and extract functions from the source code, along with their metadata such as name, line numbers, parameters, call sites, and other program constructs.
 
-### Reproduced Report List
+## Features
+
+- Parse source code using Tree-sitter.
+- Extract functions and their metadata.
+- Easy to be extended for multiple programming languages.
+
+## Installation
+
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/yourusername/LLMSCAN.git
+    cd LLMSCAN
+    ```
+
+2. Install the required dependencies:
+    ```sh
+    pip install -r requirements.txt
+    ```
+
+3. Configure the keys
+    ```sh
+    export OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkey1:sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkey2:sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkey3:sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkey4 > ~/.bashrc
+    ```
+    Here, we suggest including multiple keys, which can facilitate the parallel analysis with high throughput.
+
+    Similarly, the other two keys can be set as follows:
+
+    ```sh
+    export REPLICATE_API_TOKEN=xxxxxx > ~/.bashrc
+    export GEMINI_KEY=xxxxxx > ~/.bashrc
+    ```
+
+## Quick Start
+
+1. Ensure you have the Tree-sitter library and language bindings installed.
+    ```sh
+    cd lib
+    python build.py
+    ```
+
+2. Prepare the project that you want to analyze. Here we use Linux kernel as an example.
+
+    ```sh
+    cd benchmark
+    mkdir C
+    git clone git@github.com:torvalds/linux.git
+    ```
+
+3. Run the analysis to detect the misuse of `mhi_alloc_controller`:
+    ```sh
+    cd src
+    cd run.sh
+    ```
+
+The output files are dumped in the directory `log`, including the bug reports (in `detect_result.json`) and analyzed functions (in `probe_scope.json`).
+
+## How to Extend
+
+### More Program Facts
+
+You can implement your own analysis by adding more modules, such as more parsing-based primitives (in `parser/program_parser`) and prompts (in `prompt/apiscan_prompt.py` or other user-defined prompt files)
+
+### More Bug Types
+
+As a simple demo, we only concentrate on API misuse detection and show three misuse patterns in `prompt/apiscan_prompt.py`. In particular, we only analyze the misuse of `mhi_alloc_controller`. You can comment or delete the following code snippet in `pipeline/apiscan.py` to analyze other two API misues.
+
+```python
+if sensitive_function != "mhi_alloc_controller":
+    continue
+```
+
+## More Programming Languages
+
+The framework is language agonositic. To migrate the current C/C++ analysis to other programming languages, please refer the grammar files in the corresponding Tree-sitter libraries and refactor the code in `parser/program_parser.py`. Basically, you only need to change the node types when invoking `find_nodes_by_type`.
+
+Here are the links to grammar files Tree-sitter libraries targeting mainstream programming langugages:
+
+- C:https://github.com/tree-sitter/tree-sitter-c/blob/master/src/grammar.json
+
+- C++: https://github.com/tree-sitter/tree-sitter-cpp/blob/master/src/grammar.json
+
+- Java: https://github.com/tree-sitter/tree-sitter-java/blob/master/src/grammar.json
+
+- Python: https://github.com/tree-sitter/tree-sitter-python/blob/master/src/grammar.json
+
+- JavaScript: https://github.com/tree-sitter/tree-sitter-javascript/blob/master/src/grammar.json
 
 
+## Contributing
 
-### TODO List
+Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
 
-#### Case I:
+## Contact
 
-- https://github.com/openssl/openssl/pull/19266/commits/674c2c5aa77c903f51ad3d7f8d750874b6f2388c
-
-- commit id: ec59752
-
-- Buggy file: /Users/xiangqian/Documents/CodeBase/LLMDFuzz/benchmark/C/openssl/crypto/sm2/sm2_sign.c
-
-- Bug description: To match the BN_CTX_start, it should be better to add BN_CTX_end in the end of the function.
-
-- Similar bugs:
-
-  - https://github.com/openssl/openssl/blob/d8def79838cd0d5e7c21d217aa26edb5229f0ab4/crypto/sm2/sm2_crypt.c#L107
-
-
-## Problem Formulation
-
-Input setting:
-
-- Option 1: Given API specifications (in natural languages)
-
-- Option 2: Given the resource initilization API only
-
-Outputs:
-
-- Bug reports of resource leakage (intra-procedural although it may have low recall)
-
-Target system:
-
-- Linux Kernal?
-
-## Pattern Summary
-
-Pattern 1: If the function API applies a resource and the resource does not esacape out of the current function, the resource should be freed after the initialization in the current function.
-
-Pattern 2: (Linux b3236a64). Multiple objects pointed by different fields of memory objects. Although the objects may escape, other fields correponding to the errors have been cleared.
-
-## Specification Examples
-
-- a = kmalloc()
-
-  - Ret value: can be null. check nullity before use
-
-  - Ret value: release the resouce (memory) after use
-
-  - Free API: free(a) free the object the base pointer of a
-
-  - Similar APIs: mhi_alloc_controller/mhi_free_controller
-
-  - Examples: fea3fdf975dd
-
-
-## Workflow
-
-- Extract the Use Trace (API use & Operator use & escape use) starting from function entry to each return point
-
-- LLM-based analysis: Alias analysis + Escape analysis (For intra-procedural bug detection)
-
-
-
+For any questions or suggestions, please contact [stephenw.wangcp@gmail.com](mailto:stephenw.wangcp@gmail.com).

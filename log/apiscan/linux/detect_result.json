@@ -1,6 +1,20 @@
 {
     "mhi_alloc_controller": [
-        "ath11k_mhi_register",
-        "ath12k_mhi_register"
+        {
+            "function_name": "ath11k_mhi_register",
+            "is_buggy": [
+                false,
+                false
+            ],
+            "response": "Answer: The function `ath11k_mhi_register` correctly handles the allocation and deallocation of the `mhi_controller` structure using `mhi_alloc_controller` and `mhi_free_controller` respectively. The function ensures that `mhi_free_controller` is called in case of errors during the registration process or if any specific conditions are not met. Therefore, there is no resource leak bug in this function.\n\nNo."
+        },
+        {
+            "function_name": "ath12k_mhi_register",
+            "is_buggy": [
+                false,
+                false
+            ],
+            "response": "Answer: The function `ath12k_mhi_register` correctly handles the allocation and deallocation of the `mhi_controller` object `mhi_ctrl`. The function ensures that `mhi_alloc_controller()` is called at the beginning and `mhi_free_controller(mhi_ctrl)` is invoked in case of any error during the registration process. Therefore, there is no resource leak bug in this function.\n\nNo."
+        }
     ]
 }

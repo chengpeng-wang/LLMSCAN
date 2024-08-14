@@ -1,9 +1,4 @@
 #!/bin/bash
-
-# Set the path of the log directory relative to the script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_DIR="$SCRIPT_DIR/../log"
-
 source_bashrc() {
   if [ -f "$HOME/.bashrc" ]; then
     . "$HOME/.bashrc"

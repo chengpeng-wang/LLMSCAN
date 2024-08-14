@@ -1,15 +1,15 @@
-import sys
 import os
+import sys
 from os import path
+from enum import Enum
+from pathlib import Path
+
 import tree_sitter
 from tree_sitter import Language
 
 sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
 
 from typing import List, Tuple, Dict
-from enum import Enum
-from pathlib import Path
-
 
 class Function:
     def __init__(
@@ -30,9 +30,9 @@ class Function:
         self.start_line_number = start_line_number
         self.end_line_number = end_line_number
 
+        # root node of the parse tree
+        # Attention: the parse tree is in the context of the whole file
         self.parse_tree_root_node = function_node
-        self.is_transformed = False
-        self.is_parsed = False
 
         # call site nodes and line numbers (conform to control flow order)
         self.call_site_nodes = []
@@ -43,13 +43,13 @@ class Function:
 
 class TSParser:
     """
-    TSParser class for extracting information from Java files using tree-sitter.
+    TSParser class for extracting information from C/C++ files using tree-sitter.
     """
 
     def __init__(self, code_in_projects: Dict[str, str]) -> None:
         """
-        Initialize TSParser with a collection of C files.
-        :param c_file_path: The path of a C file.
+        Initialize TSParser with a collection of C/C++ files.
+        :param code_in_projects: A dictionary containing the content of C/C++ files.
         """
         self.code_in_projects = code_in_projects
         self.functionRawDataDic = {}
@@ -67,18 +67,12 @@ class TSParser:
         self.parser.set_language(self.c_lang)
 
 
-    def parse_function_info(
-        self,
-        file_path: str,
-        source_code: str,
-        tree: tree_sitter.Tree,
-    ) -> None:
+    def parse_function_info(self, file_path: str, source_code: str, tree: tree_sitter.Tree) -> None:
         """
-        Extract class declaration info: class name, fields, and functions
-        :param file_path: The path of the Java file.
-        :param source_code: The content of the source code
-        :param package_name: The package name
-        :param root_node: The root node the parse tree
+        Parse the function information in a C/C++ file.
+        :param file_path: The path of the C/C++ file.
+        :param source_code: The content of the C/C++ file.
+        :param tree: The parse tree of the C/C++ file.
         """
         all_function_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
         for node in all_function_nodes:
@@ -117,6 +111,9 @@ class TSParser:
     
 
     def parse_project(self) -> None:
+        """
+        Parse the C/C++ project.
+        """
         cnt = 0
         for c_file_path in self.code_in_projects:
             print("Parsing file: ", cnt, "/", len(self.code_in_projects))
@@ -139,8 +136,7 @@ class TSAnalyzer:
     ) -> None:
         """
         Initialize TSParser with the project path.
-        Currently we only analyze a single java file
-        :param c_file_path: The path of a c file
+        :param code_in_projects: The path of a C/C++ file
         """
         self.ts_parser = TSParser(code_in_projects)
         self.ts_parser.parse_project()
@@ -164,19 +160,15 @@ class TSAnalyzer:
             current_function = self.extract_meta_data_in_single_function(current_function, file_content)
             self.environment[function_id] = current_function
         return
-        
-        
+
     def find_all_top_functions(self) -> List[int]:
         """
         Collect all the main functions, which are ready for analysis
         :return: a list of ids indicating main functions
         """
-        # self.functions: Dict[int, (str, str)] = {}
         main_ids = []
         for function_id in self.ts_parser.functionRawDataDic:
-            (name, code, start_line_number, end_line_number) = self.ts_parser.functionRawDataDic[
-                function_id
-            ]
+            (name, code, start_line_number, end_line_number) = self.ts_parser.functionRawDataDic[function_id]
             if code.count("\n") < 2:
                 continue
             if name in {"main"}:
@@ -195,6 +187,11 @@ class TSAnalyzer:
     def find_nodes_by_type(
         root_node: tree_sitter.Node, node_type: str
     ) -> List[tree_sitter.Node]:
+        """
+        Find all the nodes with the specific type in the parse tree
+        :param root_node: the root node of the parse tree
+        :param node_type: the type of the nodes to be found
+        """
         nodes = []
         if root_node.type == node_type:
             nodes.append(root_node)
@@ -206,13 +203,10 @@ class TSAnalyzer:
         self, function_id: int, source_code: str, call_expr_node: tree_sitter.Node
     ) -> List[int]:
         """
-        Find callees that invoked by a specific function.
-        Attention: call_site_node should be derived from source_code directly
-        :param function_id: caller function id
-        :param file_path: the path of the file containing the caller function
-        :param source_code: the content of the source file
-        :param call_site_node: the node of the call site. The type is 'call_expression'
-        :return the list of the ids of called functions
+        Find the callee of a function call
+        :param function_id: the id of the caller function
+        :param source_code: the content of the file
+        :param call_expr_node: the node of the function call
         """
         assert call_expr_node.type == "call_expression"
         function_name = ""
@@ -227,8 +221,12 @@ class TSAnalyzer:
         else:
             return self.ts_parser.functionNameToId[function_name]
 
-
     def find_if_statements(self, source_code, root_node) -> Dict[Tuple, Tuple]:
+        """
+        Find all the if statements in the function
+        :param source_code: the content of the function
+        :param root_node: the root node of the parse tree
+        """
         targets = self.find_nodes_by_type(root_node, "if_statement")
         if_statements = {}
 
@@ -269,22 +267,15 @@ class TSAnalyzer:
                 (true_branch_start_line, true_branch_end_line),
                 (else_branch_start_line, else_branch_end_line),
             )
-            # print("------------------")
-            # print(condition_line, if_statement_end_line)
-            # print(condition_line)
-            # print(condition_str)
-            # print(true_branch_start_line, true_branch_end_line)
-            # print(else_branch_start_line, else_branch_end_line)
-            # print("------------------\n")
         return if_statements
-
 
     def extract_meta_data_in_single_function(
         self, current_function: Function, file_content: str
     ) -> Function:
         """
-        :param current_function: Function object
-        :return: Function object with updated parse tree and call info
+        Extract meta data in a single function
+        :param current_function: the function to be analyzed
+        :param file_content: the content of the file
         """
         # Identify call site info and maintain the environment
         all_call_sites = self.find_nodes_by_type(current_function.parse_tree_root_node, "call_expression")
@@ -314,16 +305,23 @@ class TSAnalyzer:
         return current_function
 
     def find_function_by_line_number(self, line_number: int) -> List[Function]:
+        """
+        Find the function that contains the specific line number
+        :param line_number: the line number to be searched
+        """
         for function_id in self.environment:
             function = self.environment[function_id]
             if function.start_line_number <= line_number <= function.end_line_number:
                 return [function]
         return []
 
-
     def find_node_by_line_number(
         self, line_number: int
     ) -> List[Tuple[str, tree_sitter.Node]]:
+        """
+        Find the node that contains the specific line number
+        :param line_number: the line number to be searched
+        """
         code_node_list = []
         for function_id in self.environment:
             function = self.environment[function_id]
@@ -346,3 +344,4 @@ class TSAnalyzer:
                 if start_line == end_line == line_number:
                     code_node_list.append((function.function_code, node))
         return code_node_list
+    
