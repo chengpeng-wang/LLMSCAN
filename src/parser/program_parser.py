@@ -41,11 +41,6 @@ class Function:
         self.if_statements = {}
 
 
-    def set_call_sites(self, call_sites: List[Tuple[tree_sitter.Node, int]]) -> None:
-        self.call_site_nodes = call_sites
-        return
-
-
 class TSParser:
     """
     TSParser class for extracting information from Java files using tree-sitter.
@@ -168,14 +163,6 @@ class TSAnalyzer:
             )
             current_function = self.extract_meta_data_in_single_function(current_function, file_content)
             self.environment[function_id] = current_function
-
-        cnt = 0
-        for callee_id in self.callee_caller_map:
-            for caller_id in self.callee_caller_map[callee_id]:
-                print(self.environment[caller_id].function_name, "-->", self.environment[callee_id].function_name)
-            cnt += 1 
-            if cnt > 100:
-                break
         return
         
         
@@ -239,43 +226,6 @@ class TSAnalyzer:
             return []
         else:
             return self.ts_parser.functionNameToId[function_name]
-        
-
-
-    # def find_callee(
-    #     self, function_id: int, source_code: str, call_expr_node: tree_sitter.Node
-    # ) -> List[int]:
-    #     """
-    #     Find callees that invoked by a specific function.
-    #     Attention: call_site_node should be derived from source_code directly
-    #     :param function_id: caller function id
-    #     :param file_path: the path of the file containing the caller function
-    #     :param source_code: the content of the source file
-    #     :param call_site_node: the node of the call site. The type is 'call_expression'
-    #     :return the list of the ids of called functions
-    #     """
-    #     assert call_expr_node.type == "call_expression"
-    #     function_name = ""
-    #     function_name = source_code[call_expr_node.start_byte : call_expr_node.end_byte]
-    #     for sub_child in call_expr_node.children:
-    #         if sub_child.type == "identifier":
-    #             function_name = source_code[sub_child.start_byte:sub_child.end_byte]
-    #             # print(function_name)
-    #             # exit(0)
-    #             break
-
-    #     (caller_name, _, _, _) = self.ts_parser.functionRawDataDic[function_id]
-    #     # print("caller:", caller_name, "callee:", function_name)
-
-    #     callee_ids = []
-    #     for function_id in self.ts_parser.functionToFile:
-    #         # Maybe too conservative
-    #         (name, code, start_line_number, end_line_number) = (
-    #             self.ts_parser.functionRawDataDic[function_id]
-    #         )
-    #         if name == function_name:
-    #             callee_ids.append(function_id)
-    #     return callee_ids
 
 
     def find_if_statements(self, source_code, root_node) -> Dict[Tuple, Tuple]:
@@ -353,7 +303,7 @@ class TSAnalyzer:
                         self.callee_caller_map[callee_id] = set([])
                     self.callee_caller_map[callee_id].add(caller_id)
 
-        current_function.set_call_sites(white_call_sites)
+        current_function.call_site_nodes = white_call_sites
 
         # compute the scope of the if-statements to guide the further path feasibility validation
         if_statements = self.find_if_statements(
@@ -369,6 +319,7 @@ class TSAnalyzer:
             if function.start_line_number <= line_number <= function.end_line_number:
                 return [function]
         return []
+
 
     def find_node_by_line_number(
         self, line_number: int
@@ -395,17 +346,3 @@ class TSAnalyzer:
                 if start_line == end_line == line_number:
                     code_node_list.append((function.function_code, node))
         return code_node_list
-
-    def collect_syntactic_types(self, node_list: List[Tuple[str, tree_sitter.Node]]):
-        syntactic_types = set([])
-        for code, node in node_list:
-            if "expression" in node.type or "declarator" in node.type:
-                sub_nodes = self.find_all_nodes(node)
-                for sub_node in sub_nodes:
-                    if (
-                        any(char.isalpha() for char in sub_node.type)
-                        and "identifier" not in sub_node.type
-                        and "declarator" not in sub_node.type
-                    ):
-                        syntactic_types.add(sub_node.type)
-        return syntactic_types

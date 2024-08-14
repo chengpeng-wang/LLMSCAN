@@ -33,8 +33,6 @@ class LLM:
         output = ""
         if "gemini" in self.online_model_name:
             output = self.infer_with_gemini(message)
-        elif "claude" in self.online_model_name:
-            output = self.infer_claude(message)
         elif "gpt" in self.online_model_name:
             output = self.infer_with_openai_model(message)
         input_token_cost = (
@@ -118,53 +116,6 @@ class LLM:
                 return ""
 
 
-    def infer_claude(self, message: str) -> str:
-        start_time = time.time()
-
-        def timeout_handler(signum, frame):
-            raise TimeoutError("ChatCompletion timeout")
-
-        def simulate_ctrl_c(signal, frame):
-            raise KeyboardInterrupt("Simulating Ctrl+C")
-
-        input = [
-            {"role": "system", "content": self.systemRole},
-            {"role": "user", "content": message},
-        ]
-        signal.signal(signal.SIGALRM, timeout_handler)
-
-        received = False
-        tryCnt = 0
-        while not received:
-            tryCnt += 1
-            time.sleep(2)
-            try:
-                signal.alarm(60)  # Set a timeout of 20 seconds
-                openai.api_key = self.openai_key
-                response = openai.ChatCompletion.create(
-                    model=self.online_model_name,
-                    messages=input,
-                    temperature=self.temperature,
-                )
-                signal.alarm(0)  # Cancel the timeout
-                output = response.choices[0].message.content
-                print("Inference succeeded...")
-                return output
-            except TimeoutError:
-                print("ChatCompletion call timed out")
-                received = False
-                simulate_ctrl_c(None, None)  # Simulate Ctrl+C effect
-            except KeyboardInterrupt:
-                print("ChatCompletion cancelled by user")
-                return ""
-            except Exception:
-                print("API error:", sys.exc_info())
-                received = False
-            if tryCnt > 5:
-                return ""
-
-
-    # Temporarily deprecated
     def infer_with_openai_model(self, message):
         def timeout_handler(signum, frame):
             raise TimeoutError("ChatCompletion timeout")

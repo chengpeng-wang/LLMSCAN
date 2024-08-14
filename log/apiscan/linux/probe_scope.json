@@ -1,0 +1,6 @@
+{
+    "mhi_alloc_controller": [
+        "ath11k_mhi_register",
+        "ath12k_mhi_register"
+    ]
+}
