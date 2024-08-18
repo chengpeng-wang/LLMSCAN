@@ -116,8 +116,10 @@ class TSParser:
         Parse the C/C++ project.
         """
         cnt = 0
+        pbar = tqdm(total=len(self.code_in_projects), desc="Parsing files")
         for c_file_path in self.code_in_projects:
-            print("Parsing file: ", cnt, "/", len(self.code_in_projects))
+            pbar.update(1)
+            # print("Parsing file: ", cnt, "/", len(self.code_in_projects))
             cnt += 1
             source_code = self.code_in_projects[c_file_path]
             tree = self.parser.parse(bytes(source_code, "utf8"))
@@ -147,7 +149,7 @@ class TSAnalyzer:
         self.callee_caller_map = {}
 
         cnt = 0
-        pbar = tqdm(total=len(self.ts_parser.functionRawDataDic))
+        pbar = tqdm(total=len(self.ts_parser.functionRawDataDic), desc="Analyzing functions")
         for function_id in self.ts_parser.functionRawDataDic:
             # print("Analyzing functions:", cnt, "/", len(self.ts_parser.functionRawDataDic))
             pbar.update(1)
