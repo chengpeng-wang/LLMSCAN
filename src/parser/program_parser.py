@@ -7,6 +7,7 @@ from pathlib import Path
 import tree_sitter
 from tree_sitter import Language
 from tqdm import tqdm
+import networkx as nx
 
 sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
 
@@ -147,6 +148,7 @@ class TSAnalyzer:
         self.environment = {}
         self.caller_callee_map = {}
         self.callee_caller_map = {}
+        self.call_graph = nx.DiGraph()
 
         cnt = 0
         pbar = tqdm(total=len(self.ts_parser.functionRawDataDic), desc="Analyzing functions")
@@ -164,21 +166,15 @@ class TSAnalyzer:
             )
             current_function = self.extract_meta_data_in_single_function(current_function, file_content)
             self.environment[function_id] = current_function
+        
+        pbar.close()
+        # initialize call graph
+        for caller_id in self.caller_callee_map:
+            for callee_id in self.caller_callee_map[caller_id]:
+                self.call_graph.add_edge(caller_id, callee_id)
+
         return
 
-    def find_all_top_functions(self) -> List[int]:
-        """
-        Collect all the main functions, which are ready for analysis
-        :return: a list of ids indicating main functions
-        """
-        main_ids = []
-        for function_id in self.ts_parser.functionRawDataDic:
-            (name, code, start_line_number, end_line_number) = self.ts_parser.functionRawDataDic[function_id]
-            if code.count("\n") < 2:
-                continue
-            if name in {"main"}:
-                main_ids.append(function_id)
-        return main_ids
 
     def find_all_nodes(self, root_node: tree_sitter.Node) -> List[tree_sitter.Node]:
         if root_node is None:

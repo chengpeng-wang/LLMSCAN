@@ -6,3 +6,5 @@ tiktoken
 replicate
 openai
 google-generativeai
+tqdm
+networkx
