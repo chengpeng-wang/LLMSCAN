@@ -22,7 +22,7 @@ class LLM:
         self.encoding = tiktoken.encoding_for_model("gpt-3.5-turbo-0125") # We only use gpt-3.5 to measure token cost
         self.openai_key = openai_key
         self.temperature = temperature
-        self.systemRole = "You are a experienced C/C++ programmer and good at understanding C/C++ programs."
+        self.systemRole = "You are a experienced programmer and good at understanding programs written in mainstream programming languages."
         return
 
     def infer(
@@ -168,3 +168,4 @@ class LLM:
             if tryCnt > 5:
                 output = ""
         return output
+    

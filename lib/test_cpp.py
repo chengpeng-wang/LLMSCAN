@@ -1,7 +1,7 @@
 import tree_sitter
 from typing import List
 
-C_LANGUAGE = tree_sitter.Language("build/my-languages.so", "java")
+C_LANGUAGE = tree_sitter.Language("build/my-languages.so", "cpp")
 
 parser = tree_sitter.Parser()
 parser.set_language(C_LANGUAGE)
@@ -21,22 +21,16 @@ def find_nodes(root_node: tree_sitter.Node, node_type: str) -> List[tree_sitter.
         nodes.extend(find_nodes(child_node, node_type))
     return nodes
 
-# Read the Java file
-with open("../benchmark/Java/demo/01.java", "r") as file:
+with open("../benchmark/C++/demo/01.cpp", "r") as file:
     source_code = file.read()
 
-# Parse the Java code
 tree = parser.parse(bytes(source_code, "utf8"))
 
 root = tree.root_node
 all_function_nodes = []
 
-for_nodes = find_nodes(root, "for_statement")
-for_nodes.extend(find_nodes(root, "enhanced_for_statement"))
-while_nodes = find_nodes(root, "while_statement")
+all_function_definition_nodes = find_nodes(tree.root_node, "parameter_declaration")
 
-for node in for_nodes:
-    for sub_node in node.children:
-        print(sub_node.type)
-        print(source_code[sub_node.start_byte:sub_node.end_byte])
-        print("")
+for node in all_function_definition_nodes:
+    for sub_target in node.children:
+        print(sub_target.type)

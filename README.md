@@ -1,12 +1,17 @@
 # LLMSCAN
 
-LLMSCAN is a tool designed to parse and analyze source code to instantiate LLM-based program analysis. Based on Tree-sitter, it provides functionality to identify and extract functions from the source code, along with their metadata such as name, line numbers, parameters, call sites, and other program constructs. Importantly, it achieves light-weighted call graph analysis based on parsing, which enables more effective code browsing and navigation for real-world programs.
+LLMSCAN is a tool designed to parse and analyze source code to instantiate LLM-based program analysis. Based on Tree-sitter, it provides functionality to identify and extract functions from the source code, along with their metadata such as function name, line numbers, parameters, call sites, and other program constructs (including branches and loops). Importantly, it achieves light-weighted call graph analysis based on parsing, which enables more effective code browsing and navigation for real-world programs. The latest version of LLMSCAN can support four programming languages, including C, C++, Java, and Python.
 
 ## Features
 
 - Parse source code using Tree-sitter.
 - Browse code for prompting-based static analysis.
-- Easily extendable for multiple programming languages.
+- Multi-linguistic support
+
+## Functionalities
+
+- APIScan: Search all the call sites of specific APIs
+- MetaScan: Extract syntactic facts as function metadata.
 
 ## Installation
 
@@ -60,7 +65,7 @@ The output files are dumped in the directory `log`, including the bug reports (i
 
 ### More Program Facts
 
-You can implement your own analysis by adding more modules, such as more parsing-based primitives (in `parser/program_parser`) and prompts (in `prompt/apiscan_prompt.py` or other user-defined prompt files).
+You can implement your own analysis by adding more modules, such as more parsing-based primitives (in `parser/program_parser`). If you want to derive semantic facts, which may be beyond the capability of parsing-based analysis, you can customize the prompts (in `prompt/apiscan_prompt.py` or other user-defined prompt files) and leverage LLMs to derive them in a neural manner.
 
 ### More Bug Types
 
@@ -72,7 +77,7 @@ if sensitive_function != "mhi_alloc_controller":
 
 ### More Programming Languages
 
-The framework is language-agnostic. To migrate the current C/C++ analysis to other programming languages, please refer to the grammar files in the corresponding Tree-sitter libraries and refactor the code in `parser/program_parser.py`. Basically, you only need to change the node types when invoking `find_nodes_by_type`.
+The framework is language-agnostic. To migrate the current implementations to other programming languages or extract more syntactic facts, please refer to the grammar files in the corresponding Tree-sitter libraries and refactor the code in `parser/program_parser.py`. Basically, you only need to change the node types when invoking `find_nodes_by_type`.
 
 Here are the links to grammar files in Tree-sitter libraries targeting mainstream programming languages:
 

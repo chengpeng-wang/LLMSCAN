@@ -22,7 +22,7 @@ def find_nodes(root_node: tree_sitter.Node, node_type: str) -> List[tree_sitter.
     return nodes
 
 # Read the Java file
-with open("c_demo_program.c", "r") as file:
+with open("../benchmark/C/demo/01.c", "r") as file:
     source_code = file.read()
 
 # Parse the Java code
@@ -31,42 +31,8 @@ tree = parser.parse(bytes(source_code, "utf8"))
 root = tree.root_node
 functions = {}
 
-nodes = find_nodes(root, "call_expression")
+nodes = find_nodes(root, "pointer_declarator")
+
 for node in nodes:
     for child in node.children:
-        if child.type == "identifier":
-            function_name = source_code[child.start_byte: child.end_byte]
-            print(function_name)
-
-
-
-
-# nodes = find_nodes(root, "assignment_expression")
-#
-# # Find local_variable_declaration
-# nodes.extend(find_nodes(root, "declaration"))
-#
-# # Extract the name info and line number
-# lines = []
-# for node in nodes:
-#     is_src_node = False
-#     for child in node.children:
-#         if (
-#                 child.type == "number_literal"
-#                 and source_code[child.start_byte: child.end_byte] in {"0", "0.0", "0.0f", "0.0F"}
-#         ):
-#             is_src_node = True
-#         if child.type == "call_expression":
-#             for sub_child in child.children:
-#                 if sub_child.type == "identifier":
-#                     function_name = source_code[sub_child.start_byte:sub_child.end_byte]
-#                     if function_name in {"atoi", "atof"}:
-#                         is_src_node = True
-#                         break
-#     if is_src_node:
-#         for child in node.children:
-#             if child.type == "identifier":
-#                 name = source_code[child.start_byte: child.end_byte]
-#                 line_number = source_code[: child.start_byte].count("\n") + 1
-#                 lines.append((name, line_number))
-#                 print(name, line_number)
+        print(child.type)

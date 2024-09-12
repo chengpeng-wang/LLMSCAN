@@ -9,24 +9,26 @@ from pathlib import Path
 class APIScanPipeline:
     def __init__(self,
                  project_name,
-                 all_c_files,
+                 language,
+                 all_files,
                  inference_model_name,
                  inference_key_str,
                  temperature):
         self.project_name = project_name
-        self.all_c_files = all_c_files
+        self.language = language
+        self.all_files = all_files
         self.inference_model_name = inference_model_name
         self.inference_key_str = inference_key_str
         self.temperature = temperature
 
-        self.detection_result = []
+        self.scanning_result = []
         self.buggy_traces = []
-        self.ts_analyzer = TSAnalyzer(self.all_c_files)
+        self.ts_analyzer = TSAnalyzer(self.all_files, self.language)
         self.model = LLM(self.inference_model_name, self.inference_key_str, self.temperature)
 
-    def start_detection(self):
+    def start_scan(self):
         """
-        Start the detection process.
+        Start the scanning process.
         """
         log_dir_path = str(
             Path(__file__).resolve().parent.parent.parent / ("log/apiscan/" + self.project_name)
@@ -36,16 +38,16 @@ class APIScanPipeline:
 
         probe_scope = {}
         sensitive_functions = set(prompt_dict.keys())
-        all_detection_scopes = {}
+        all_scanning_scopes = {}
 
         for sensitive_function in set(sensitive_functions):
             if sensitive_function != "mhi_alloc_controller":
                 continue
             print(sensitive_function)
-            detection_scopes = self.extract_detection_scopes(sensitive_function)
-            all_detection_scopes[sensitive_function] = detection_scopes
+            scanning_scopes = self.extract_scan_scopes(sensitive_function)
+            all_scanning_scopes[sensitive_function] = scanning_scopes
             probe_scope[sensitive_function] = []
-            for function_id in detection_scopes:
+            for function_id in scanning_scopes:
                 probe_scope[sensitive_function].append(self.ts_analyzer.environment[function_id].function_name)
         
         with open(log_dir_path + "/probe_scope.json", 'w') as f:
@@ -53,11 +55,11 @@ class APIScanPipeline:
         print(probe_scope)
 
         report = {}
-        for sensitive_function in all_detection_scopes:
+        for sensitive_function in all_scanning_scopes:
             report[sensitive_function] = []
             cnt = 1
-            for function_id in all_detection_scopes[sensitive_function]:
-                print(cnt, "/", len(all_detection_scopes[sensitive_function]))
+            for function_id in all_scanning_scopes[sensitive_function]:
+                print(cnt, "/", len(all_scanning_scopes[sensitive_function]))
                 cnt += 1
                 print("Start analyzing the function: ", self.ts_analyzer.environment[function_id].function_name)
 
@@ -71,16 +73,16 @@ class APIScanPipeline:
                     "is_buggy": is_buggy
                 })
 
-        with open(log_dir_path + "/detect_result.json", 'w') as f:
+        with open(log_dir_path + "/api_scan_result.json", 'w') as f:
             json.dump(report, f, indent=4, sort_keys=True)
         return
     
-    def extract_detection_scopes(self, api_name: str):
+    def extract_scan_scopes(self, api_name: str):
         """
-        Extract detection scopes for a given API name.
+        Extract scanning scopes for a given API name.
         """
 
-        print("Start extracting detection scopes")
+        print("Start extracting scanning scopes")
         target_function_ids = {}
         cnt = 0
         for function_id in self.ts_analyzer.ts_parser.functionRawDataDic:
@@ -98,5 +100,5 @@ class APIScanPipeline:
                     break
             if is_target:
                 target_function_ids[function_id] = self.ts_analyzer.environment[function_id].function_name
-        print("Finish extracting detection scopes")
+        print("Finish extracting scanning scopes")
         return target_function_ids
