@@ -1,0 +1,55 @@
+{
+    "1": {
+        "function_end_line": 31,
+        "function_id": 1,
+        "function_name": "meanAbsoluteDeviation",
+        "function_start_line": 5,
+        "if_statements": [
+            {
+                "condition_end_line": 24,
+                "condition_start_line": 24,
+                "condition_str": "(sum > 1)",
+                "else_branch_end_line": 27,
+                "else_branch_start_line": 27,
+                "true_branch_end_line": 25,
+                "true_branch_start_line": 25
+            }
+        ],
+        "loop_statements": [
+            {
+                "header_end_line": 8,
+                "header_start_line": 8,
+                "header_str": "double num : numbers",
+                "loop_body_end_line": 9,
+                "loop_body_start_line": 9,
+                "loop_statement_end_line": 10,
+                "loop_statement_start_line": 8
+            },
+            {
+                "header_end_line": 15,
+                "header_start_line": 15,
+                "header_str": "double num : numbers",
+                "loop_body_end_line": 16,
+                "loop_body_start_line": 16,
+                "loop_statement_end_line": 17,
+                "loop_statement_start_line": 15
+            },
+            {
+                "header_end_line": 19,
+                "header_start_line": 19,
+                "header_str": "(sum > 1)",
+                "loop_body_end_line": 21,
+                "loop_body_start_line": 20,
+                "loop_statement_end_line": 22,
+                "loop_statement_start_line": 19
+            }
+        ],
+        "parameters": [
+            [
+                "numbers",
+                5,
+                0
+            ]
+        ]
+    }
+}

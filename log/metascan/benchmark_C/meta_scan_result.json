@@ -1,0 +1,51 @@
+{
+    "1": {
+        "function_end_line": 21,
+        "function_id": 1,
+        "function_name": "logic_bomb",
+        "function_start_line": 6,
+        "if_statements": [
+            {
+                "condition_end_line": 9,
+                "condition_start_line": 9,
+                "condition_str": "(1024+x == 1024 && x>0)",
+                "else_branch_end_line": 12,
+                "else_branch_start_line": 11,
+                "true_branch_end_line": 10,
+                "true_branch_start_line": 10
+            }
+        ],
+        "loop_statements": [
+            {
+                "header_end_line": 14,
+                "header_start_line": 14,
+                "header_str": "int i = 0; true; i++",
+                "loop_body_end_line": 16,
+                "loop_body_start_line": 14,
+                "loop_statement_end_line": 16,
+                "loop_statement_start_line": 14
+            },
+            {
+                "header_end_line": 18,
+                "header_start_line": 18,
+                "header_str": "(x > 0)",
+                "loop_body_end_line": 19,
+                "loop_body_start_line": 19,
+                "loop_statement_end_line": 20,
+                "loop_statement_start_line": 18
+            }
+        ],
+        "parameters": [
+            [
+                "symvar",
+                6,
+                1
+            ],
+            [
+                "k",
+                6,
+                0
+            ]
+        ]
+    }
+}

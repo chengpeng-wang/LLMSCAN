@@ -1,0 +1,60 @@
+{
+    "1": {
+        "function_end_line": 21,
+        "function_id": 1,
+        "function_name": "intersperse",
+        "function_start_line": 3,
+        "if_statements": [
+            {
+                "condition_end_line": 4,
+                "condition_start_line": 4,
+                "condition_str": "not numbers and not delimiter",
+                "else_branch_end_line": 21,
+                "else_branch_start_line": 7,
+                "true_branch_end_line": 6,
+                "true_branch_start_line": 5
+            },
+            {
+                "condition_end_line": 17,
+                "condition_start_line": 17,
+                "condition_str": "not result",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 18,
+                "true_branch_start_line": 18
+            }
+        ],
+        "loop_statements": [
+            {
+                "header_end_line": 11,
+                "header_start_line": 11,
+                "header_str": "for n in numbers[:-1]",
+                "loop_body_end_line": 13,
+                "loop_body_start_line": 12,
+                "loop_statement_end_line": 13,
+                "loop_statement_start_line": 11
+            },
+            {
+                "header_end_line": 15,
+                "header_start_line": 15,
+                "header_str": "while result[-1] == delimiter",
+                "loop_body_end_line": 18,
+                "loop_body_start_line": 16,
+                "loop_statement_end_line": 18,
+                "loop_statement_start_line": 15
+            }
+        ],
+        "parameters": [
+            [
+                "delimiter",
+                3,
+                1
+            ],
+            [
+                "numbers",
+                3,
+                0
+            ]
+        ]
+    }
+}

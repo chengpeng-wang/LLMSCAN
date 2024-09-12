@@ -1,0 +1,64 @@
+{
+    "1": {
+        "function_end_line": 39,
+        "function_id": 1,
+        "function_name": "parse_nested_parens",
+        "function_start_line": 10,
+        "if_statements": [
+            {
+                "condition_end_line": 20,
+                "condition_start_line": 20,
+                "condition_str": "(chr == '(')",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 26,
+                "true_branch_start_line": 20
+            },
+            {
+                "condition_end_line": 22,
+                "condition_start_line": 22,
+                "condition_str": "(level > max_level)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 24,
+                "true_branch_start_line": 22
+            },
+            {
+                "condition_end_line": 28,
+                "condition_start_line": 28,
+                "condition_str": "(chr == ')')",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 36,
+                "true_branch_start_line": 28
+            },
+            {
+                "condition_end_line": 31,
+                "condition_start_line": 31,
+                "condition_str": "(level == 0)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 35,
+                "true_branch_start_line": 31
+            }
+        ],
+        "loop_statements": [
+            {
+                "header_end_line": 17,
+                "header_start_line": 17,
+                "header_str": "int i = 0; i < paren_string.length(); i++",
+                "loop_body_end_line": 37,
+                "loop_body_start_line": 17,
+                "loop_statement_end_line": 37,
+                "loop_statement_start_line": 17
+            }
+        ],
+        "parameters": [
+            [
+                "paren_string",
+                10,
+                0
+            ]
+        ]
+    }
+}
