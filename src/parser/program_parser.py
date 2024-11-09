@@ -761,8 +761,8 @@ class TSAnalyzer:
     #################################################
     ########## AST visitor utility ##################
     #################################################
-
-    def find_all_nodes(self, root_node: tree_sitter.Node) -> List[tree_sitter.Node]:
+    @staticmethod
+    def find_all_nodes(root_node: tree_sitter.Node) -> List[tree_sitter.Node]:
         if root_node is None:
             return []
         nodes = [root_node]
