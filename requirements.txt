@@ -1,5 +1,5 @@
 black
-tree-sitter
+tree-sitter>=0.20.0,<0.22.0
 transformers
 torch
 tiktoken
