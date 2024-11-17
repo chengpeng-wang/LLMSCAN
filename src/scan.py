@@ -1,5 +1,6 @@
 import os
 import argparse
+import glob
 from model.utils import *
 from pipeline.apiscan import *
 from pipeline.metascan import *
@@ -27,18 +28,20 @@ class BatchScan:
         self.temperature = temperature
         self.batch_scan_statistics = {}
 
-        suffix = ""
+        suffixs = []
         if self.language == "C":
-            suffix = ".c"
+            suffixs = ["c"]
         elif self.language == "C++":
-            suffix = ".cpp"
+            suffixs = ["cpp", "cc"]
         elif self.language == "Java":
-            suffix = ".java"
+            suffixs = ["java"]
         elif self.language == "Python":
-            suffix = ".py"
+            suffixs = ["py"]
         
         # Load all files with the specified suffix in the project path
-        self.travese_files(project_path, {suffix})
+        self.travese_files(project_path, suffixs)
+
+        print(len(self.all_files))
 
     def start_batch_scan(self) -> None:
         """
@@ -68,19 +71,15 @@ class BatchScan:
             )
             metascan_pipeline.start_scan()
     
-    def travese_files(self, project_path: str, suffix: set) -> None:
+    def travese_files(self, project_path: str, suffixs: List) -> None:
         """
         Traverse all files in the project path.
         """
-        for root, dirs, files in os.walk(project_path):
-            for file in files:
-                if file.split(".")[-1] not in suffix:
-                    continue
-                with open(os.path.join(root, file), "r") as c_file:
+        for suffix in suffixs:
+            for file in glob.glob(f"{project_path}/**/*.{suffix}", recursive=True):
+                with open(file, "r") as c_file:
                     c_file_content = c_file.read()
-                    self.all_files[os.path.join(root, file)] = c_file_content
-            for dir in dirs:
-                self.travese_files(os.path.join(root, dir), suffix)
+                    self.all_files[file] = c_file_content
 
 
 def run_dev_mode():

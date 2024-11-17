@@ -13,6 +13,7 @@ import networkx as nx
 sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
 
 from typing import List, Tuple, Dict
+from parser.ts_utils import *
 
 
 class Function:
@@ -100,13 +101,7 @@ class TSParser:
             # function_declarator
             all_function_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
             for node in all_function_nodes:
-                for sub_node in node.children:
-                    if sub_node.type == "function_declarator":
-                        all_function_header_nodes.append(sub_node)
-                    if sub_node.type == "pointer_declarator":
-                        for sub_sub_node in sub_node.children:
-                            if sub_sub_node.type == "function_declarator":
-                                all_function_header_nodes.append(sub_sub_node)
+                all_function_header_nodes.extend(find_all_recursively(node, "function_declarator"))
         elif self.language_setting in ["Java"]:
             all_function_header_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "method_declaration")
         elif self.language_setting in ["Python"]:
