@@ -103,12 +103,16 @@ class TSParser:
                 for sub_node in node.children:
                     if sub_node.type == "function_declarator":
                         all_function_header_nodes.append(sub_node)
+                    if sub_node.type == "pointer_declarator":
+                        for sub_sub_node in sub_node.children:
+                            if sub_sub_node.type == "function_declarator":
+                                all_function_header_nodes.append(sub_sub_node)
         elif self.language_setting in ["Java"]:
             all_function_header_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "method_declaration")
         elif self.language_setting in ["Python"]:
             all_function_header_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
         else:
-            assert "Wrong language setting"            
+            assert "Wrong language setting"                 
     
         for node in all_function_header_nodes:
             function_name = ""

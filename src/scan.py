@@ -38,14 +38,7 @@ class BatchScan:
             suffix = ".py"
         
         # Load all files with the specified suffix in the project path
-        for root, dirs, files in os.walk(project_path):
-            for file in files:
-                if not file.endswith(suffix):
-                    continue
-                with open(os.path.join(root, file), "r") as c_file:
-                    print(os.path.join(root, file))
-                    c_file_content = c_file.read()
-                    self.all_files[os.path.join(root, file)] = c_file_content
+        self.travese_files(project_path, {suffix})
 
     def start_batch_scan(self) -> None:
         """
@@ -74,6 +67,20 @@ class BatchScan:
                 self.temperature
             )
             metascan_pipeline.start_scan()
+    
+    def travese_files(self, project_path: str, suffix: set) -> None:
+        """
+        Traverse all files in the project path.
+        """
+        for root, dirs, files in os.walk(project_path):
+            for file in files:
+                if file.split(".")[-1] not in suffix:
+                    continue
+                with open(os.path.join(root, file), "r") as c_file:
+                    c_file_content = c_file.read()
+                    self.all_files[os.path.join(root, file)] = c_file_content
+            for dir in dirs:
+                self.travese_files(os.path.join(root, dir), suffix)
 
 
 def run_dev_mode():
