@@ -98,10 +98,7 @@ class TSParser:
         Currently, we only handle four languages: C, C++, Java, and Python.
         """
         if self.language_setting in ["C", "C++"]:
-            # function_declarator
-            all_function_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
-            for node in all_function_nodes:
-                all_function_header_nodes.extend(find_all_recursively(node, "function_declarator"))
+            all_function_header_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_declarator")
         elif self.language_setting in ["Java"]:
             all_function_header_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "method_declaration")
         elif self.language_setting in ["Python"]:
@@ -271,10 +268,15 @@ class TSAnalyzer:
         :param language: the language of the source code
         """
         if language in ["C", "C++", "Java"]:
-            node_types = [sub_node.type for sub_node in node.children]
-            index_of_last_dot = len(node_types) - 1 - node_types[::-1].index(".") if "." in node_types else -1
-            function_name_node = node.children[index_of_last_dot + 1]
-            return source_code[function_name_node.start_byte:function_name_node.end_byte]
+            sub_sub_nodes = []
+            for sub_node in node.children:
+                for sub_sub_node in sub_node.children:
+                    sub_sub_nodes.append(sub_sub_node)
+            sub_sub_node_types = [sub_sub_node.type for sub_sub_node in sub_sub_nodes]
+            index_of_last_dot = len(sub_sub_node_types) - 1 - sub_sub_node_types[::-1].index(".") if "." in sub_sub_node_types else -1
+            index_of_last_arrow = len(sub_sub_node_types) - 1 - sub_sub_node_types[::-1].index("->") if "->" in sub_sub_node_types else -1
+            function_name_node = sub_sub_nodes[max(index_of_last_dot, index_of_last_arrow) + 1]
+            return function_name_node
         elif language in ["Python"]:
             for sub_node in node.children:
                 if sub_node.type == "attribute":
