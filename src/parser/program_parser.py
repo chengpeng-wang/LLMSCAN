@@ -112,6 +112,9 @@ class TSParser:
                 if sub_node.type == "identifier":
                     function_name = source_code[sub_node.start_byte:sub_node.end_byte]
                     break
+                elif sub_node.type == "qualified_identifier":
+                    qualified_function_name = source_code[sub_node.start_byte:sub_node.end_byte]
+                    function_name = qualified_function_name.split("::")[-1]
 
             if function_name == "":
                 continue
@@ -276,7 +279,7 @@ class TSAnalyzer:
             index_of_last_dot = len(sub_sub_node_types) - 1 - sub_sub_node_types[::-1].index(".") if "." in sub_sub_node_types else -1
             index_of_last_arrow = len(sub_sub_node_types) - 1 - sub_sub_node_types[::-1].index("->") if "->" in sub_sub_node_types else -1
             function_name_node = sub_sub_nodes[max(index_of_last_dot, index_of_last_arrow) + 1]
-            return function_name_node
+            return source_code[function_name_node.start_byte:function_name_node.end_byte]
         elif language in ["Python"]:
             for sub_node in node.children:
                 if sub_node.type == "attribute":
@@ -291,10 +294,10 @@ class TSAnalyzer:
         :param file_content: the content of the file
         :param call_site_node: the node of the call site
         """
-        callee_names = self.get_callee_name_at_call_site(call_site_node, file_content, self.ts_parser.language_setting)
+        callee_name = self.get_callee_name_at_call_site(call_site_node, file_content, self.ts_parser.language_setting)
         callee_ids = []
-        if callee_names in self.ts_parser.functionNameToId:
-            callee_ids = list(self.ts_parser.functionNameToId[callee_names])
+        if callee_name in self.ts_parser.functionNameToId:
+            callee_ids = list(self.ts_parser.functionNameToId[callee_name])
         return callee_ids
 
     #################################################
