@@ -30,9 +30,9 @@ class BatchScan:
 
         suffixs = []
         if self.language == "C":
-            suffixs = ["c"]
+            suffixs = ["c", "h"]
         elif self.language == "C++":
-            suffixs = ["cpp", "cc"]
+            suffixs = ["cpp", "cc", "hpp", "c", "h"]
         elif self.language == "Java":
             suffixs = ["java"]
         elif self.language == "Python":
