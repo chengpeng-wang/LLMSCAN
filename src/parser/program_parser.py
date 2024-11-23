@@ -13,7 +13,6 @@ import networkx as nx
 sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
 
 from typing import List, Tuple, Dict
-from parser.ts_utils import *
 
 
 class Function:
@@ -90,9 +89,6 @@ class TSParser:
         """
         all_function_header_nodes = []
 
-        """
-        Currently, we only handle four languages: C, C++, Java, and Python.
-        """
         if self.language_setting in ["C", "C++"]:
             all_function_header_nodes = []
             all_function_definition_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
