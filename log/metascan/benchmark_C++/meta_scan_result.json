@@ -1,62 +1,800 @@
 {
     "1": {
-        "function_end_line": 39,
+        "function_end_line": 236,
         "function_id": 1,
-        "function_name": "parse_nested_parens",
-        "function_start_line": 10,
+        "function_name": "field2json",
+        "function_start_line": 50,
         "if_statements": [
             {
-                "condition_end_line": 20,
-                "condition_start_line": 20,
-                "condition_str": "(chr == '(')",
+                "condition_end_line": 57,
+                "condition_start_line": 57,
+                "condition_str": "(repeated)",
                 "else_branch_end_line": 0,
                 "else_branch_start_line": 0,
-                "true_branch_end_line": 26,
-                "true_branch_start_line": 20
+                "true_branch_end_line": 60,
+                "true_branch_start_line": 58
             },
             {
-                "condition_end_line": 22,
-                "condition_start_line": 22,
-                "condition_str": "(level > max_level)",
+                "condition_end_line": 62,
+                "condition_start_line": 62,
+                "condition_str": "(repeated)",
                 "else_branch_end_line": 0,
                 "else_branch_start_line": 0,
-                "true_branch_end_line": 24,
-                "true_branch_start_line": 22
+                "true_branch_end_line": 65,
+                "true_branch_start_line": 63
             },
             {
-                "condition_end_line": 28,
-                "condition_start_line": 28,
-                "condition_str": "(chr == ')')",
-                "else_branch_end_line": 0,
-                "else_branch_start_line": 0,
-                "true_branch_end_line": 36,
-                "true_branch_start_line": 28
+                "condition_end_line": 69,
+                "condition_start_line": 69,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 81,
+                "else_branch_start_line": 78,
+                "true_branch_end_line": 77,
+                "true_branch_start_line": 70
             },
             {
-                "condition_end_line": 31,
-                "condition_start_line": 31,
-                "condition_str": "(level == 0)",
+                "condition_end_line": 84,
+                "condition_start_line": 84,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 96,
+                "else_branch_start_line": 93,
+                "true_branch_end_line": 92,
+                "true_branch_start_line": 85
+            },
+            {
+                "condition_end_line": 99,
+                "condition_start_line": 99,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 111,
+                "else_branch_start_line": 108,
+                "true_branch_end_line": 107,
+                "true_branch_start_line": 100
+            },
+            {
+                "condition_end_line": 114,
+                "condition_start_line": 114,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 126,
+                "else_branch_start_line": 123,
+                "true_branch_end_line": 122,
+                "true_branch_start_line": 115
+            },
+            {
+                "condition_end_line": 129,
+                "condition_start_line": 129,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 141,
+                "else_branch_start_line": 138,
+                "true_branch_end_line": 137,
+                "true_branch_start_line": 130
+            },
+            {
+                "condition_end_line": 144,
+                "condition_start_line": 144,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 156,
+                "else_branch_start_line": 153,
+                "true_branch_end_line": 152,
+                "true_branch_start_line": 145
+            },
+            {
+                "condition_end_line": 159,
+                "condition_start_line": 159,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 171,
+                "else_branch_start_line": 168,
+                "true_branch_end_line": 167,
+                "true_branch_start_line": 160
+            },
+            {
+                "condition_end_line": 176,
+                "condition_start_line": 176,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 197,
+                "else_branch_start_line": 189,
+                "true_branch_end_line": 188,
+                "true_branch_start_line": 177
+            },
+            {
+                "condition_end_line": 181,
+                "condition_start_line": 181,
+                "condition_str": "(is_binary)",
                 "else_branch_end_line": 0,
                 "else_branch_start_line": 0,
-                "true_branch_end_line": 35,
-                "true_branch_start_line": 31
+                "true_branch_end_line": 184,
+                "true_branch_start_line": 182
+            },
+            {
+                "condition_end_line": 192,
+                "condition_start_line": 192,
+                "condition_str": "(is_binary)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 195,
+                "true_branch_start_line": 193
+            },
+            {
+                "condition_end_line": 201,
+                "condition_start_line": 201,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 215,
+                "else_branch_start_line": 211,
+                "true_branch_end_line": 210,
+                "true_branch_start_line": 202
+            },
+            {
+                "condition_end_line": 218,
+                "condition_start_line": 218,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 230,
+                "else_branch_start_line": 227,
+                "true_branch_end_line": 226,
+                "true_branch_start_line": 219
             }
         ],
         "loop_statements": [
             {
-                "header_end_line": 17,
-                "header_start_line": 17,
-                "header_str": "int i = 0; i < paren_string.length(); i++",
-                "loop_body_end_line": 37,
-                "loop_body_start_line": 17,
-                "loop_statement_end_line": 37,
-                "loop_statement_start_line": 17
+                "header_end_line": 71,
+                "header_start_line": 71,
+                "header_str": "size_t i = 0; i != array_size; ++i",
+                "loop_body_end_line": 76,
+                "loop_body_start_line": 72,
+                "loop_statement_end_line": 76,
+                "loop_statement_start_line": 71
+            },
+            {
+                "header_end_line": 86,
+                "header_start_line": 86,
+                "header_str": "size_t i = 0; i != array_size; ++i",
+                "loop_body_end_line": 91,
+                "loop_body_start_line": 87,
+                "loop_statement_end_line": 91,
+                "loop_statement_start_line": 86
+            },
+            {
+                "header_end_line": 101,
+                "header_start_line": 101,
+                "header_str": "size_t i = 0; i != array_size; ++i",
+                "loop_body_end_line": 106,
+                "loop_body_start_line": 102,
+                "loop_statement_end_line": 106,
+                "loop_statement_start_line": 101
+            },
+            {
+                "header_end_line": 116,
+                "header_start_line": 116,
+                "header_str": "size_t i = 0; i != array_size; ++i",
+                "loop_body_end_line": 121,
+                "loop_body_start_line": 117,
+                "loop_statement_end_line": 121,
+                "loop_statement_start_line": 116
+            },
+            {
+                "header_end_line": 131,
+                "header_start_line": 131,
+                "header_str": "size_t i = 0; i != array_size; ++i",
+                "loop_body_end_line": 136,
+                "loop_body_start_line": 132,
+                "loop_statement_end_line": 136,
+                "loop_statement_start_line": 131
+            },
+            {
+                "header_end_line": 146,
+                "header_start_line": 146,
+                "header_str": "size_t i = 0; i != array_size; ++i",
+                "loop_body_end_line": 151,
+                "loop_body_start_line": 147,
+                "loop_statement_end_line": 151,
+                "loop_statement_start_line": 146
+            },
+            {
+                "header_end_line": 161,
+                "header_start_line": 161,
+                "header_str": "size_t i = 0; i != array_size; ++i",
+                "loop_body_end_line": 166,
+                "loop_body_start_line": 162,
+                "loop_statement_end_line": 166,
+                "loop_statement_start_line": 161
+            },
+            {
+                "header_end_line": 178,
+                "header_start_line": 178,
+                "header_str": "size_t i = 0; i != array_size; ++i",
+                "loop_body_end_line": 187,
+                "loop_body_start_line": 179,
+                "loop_statement_end_line": 187,
+                "loop_statement_start_line": 178
+            },
+            {
+                "header_end_line": 203,
+                "header_start_line": 203,
+                "header_str": "size_t i = 0; i != array_size; ++i",
+                "loop_body_end_line": 209,
+                "loop_body_start_line": 204,
+                "loop_statement_end_line": 209,
+                "loop_statement_start_line": 203
+            },
+            {
+                "header_end_line": 220,
+                "header_start_line": 220,
+                "header_str": "size_t i = 0; i != array_size; ++i",
+                "loop_body_end_line": 225,
+                "loop_body_start_line": 221,
+                "loop_statement_end_line": 225,
+                "loop_statement_start_line": 220
             }
         ],
         "parameters": [
             [
-                "paren_string",
-                10,
+                "allocator",
+                51,
+                2
+            ],
+            [
+                "msg",
+                50,
+                0
+            ],
+            [
+                "field",
+                50,
+                1
+            ]
+        ]
+    },
+    "2": {
+        "function_end_line": 275,
+        "function_id": 2,
+        "function_name": "parse_msg",
+        "function_start_line": 238,
+        "if_statements": [
+            {
+                "condition_end_line": 241,
+                "condition_start_line": 241,
+                "condition_str": "(!d)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 242,
+                "true_branch_start_line": 242
+            },
+            {
+                "condition_end_line": 245,
+                "condition_start_line": 245,
+                "condition_str": "(!root)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 246,
+                "true_branch_start_line": 246
+            },
+            {
+                "condition_end_line": 250,
+                "condition_start_line": 250,
+                "condition_str": "(!field)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 254,
+                "true_branch_start_line": 251
+            },
+            {
+                "condition_end_line": 257,
+                "condition_start_line": 257,
+                "condition_str": "(!ref)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 261,
+                "true_branch_start_line": 258
+            },
+            {
+                "condition_end_line": 263,
+                "condition_start_line": 263,
+                "condition_str": "(field->is_optional() && !ref->HasField(*msg, field))",
+                "else_branch_end_line": 272,
+                "else_branch_start_line": 267,
+                "true_branch_end_line": 266,
+                "true_branch_start_line": 264
+            }
+        ],
+        "loop_statements": [
+            {
+                "header_end_line": 247,
+                "header_start_line": 247,
+                "header_str": "size_t i = 0; i != count; ++i",
+                "loop_body_end_line": 273,
+                "loop_body_start_line": 248,
+                "loop_statement_end_line": 273,
+                "loop_statement_start_line": 247
+            }
+        ],
+        "parameters": [
+            [
+                "allocator",
+                238,
+                1
+            ],
+            [
+                "msg",
+                238,
+                0
+            ]
+        ]
+    },
+    "3": {
+        "function_end_line": 465,
+        "function_id": 3,
+        "function_name": "json2field",
+        "function_start_line": 278,
+        "if_statements": [
+            {
+                "condition_end_line": 286,
+                "condition_start_line": 286,
+                "condition_str": "(json->GetType() != rapidjson::kNumberType)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 289,
+                "true_branch_start_line": 287
+            },
+            {
+                "condition_end_line": 290,
+                "condition_start_line": 290,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 297,
+                "else_branch_start_line": 294,
+                "true_branch_end_line": 293,
+                "true_branch_start_line": 291
+            },
+            {
+                "condition_end_line": 302,
+                "condition_start_line": 302,
+                "condition_str": "(json->GetType() != rapidjson::kNumberType)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 305,
+                "true_branch_start_line": 303
+            },
+            {
+                "condition_end_line": 306,
+                "condition_start_line": 306,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 313,
+                "else_branch_start_line": 310,
+                "true_branch_end_line": 309,
+                "true_branch_start_line": 307
+            },
+            {
+                "condition_end_line": 318,
+                "condition_start_line": 318,
+                "condition_str": "(json->GetType() != rapidjson::kNumberType)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 321,
+                "true_branch_start_line": 319
+            },
+            {
+                "condition_end_line": 322,
+                "condition_start_line": 322,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 329,
+                "else_branch_start_line": 326,
+                "true_branch_end_line": 325,
+                "true_branch_start_line": 323
+            },
+            {
+                "condition_end_line": 334,
+                "condition_start_line": 334,
+                "condition_str": "(json->GetType() != rapidjson::kNumberType)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 337,
+                "true_branch_start_line": 335
+            },
+            {
+                "condition_end_line": 338,
+                "condition_start_line": 338,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 345,
+                "else_branch_start_line": 342,
+                "true_branch_end_line": 341,
+                "true_branch_start_line": 339
+            },
+            {
+                "condition_end_line": 350,
+                "condition_start_line": 350,
+                "condition_str": "(json->GetType() != rapidjson::kNumberType)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 353,
+                "true_branch_start_line": 351
+            },
+            {
+                "condition_end_line": 354,
+                "condition_start_line": 354,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 361,
+                "else_branch_start_line": 358,
+                "true_branch_end_line": 357,
+                "true_branch_start_line": 355
+            },
+            {
+                "condition_end_line": 366,
+                "condition_start_line": 366,
+                "condition_str": "(json->GetType() != rapidjson::kNumberType)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 369,
+                "true_branch_start_line": 367
+            },
+            {
+                "condition_end_line": 370,
+                "condition_start_line": 370,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 377,
+                "else_branch_start_line": 374,
+                "true_branch_end_line": 373,
+                "true_branch_start_line": 371
+            },
+            {
+                "condition_end_line": 382,
+                "condition_start_line": 382,
+                "condition_str": "(json->GetType() != rapidjson::kTrueType && json->GetType() != rapidjson::kFalseType)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 385,
+                "true_branch_start_line": 383
+            },
+            {
+                "condition_end_line": 387,
+                "condition_start_line": 387,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 394,
+                "else_branch_start_line": 391,
+                "true_branch_end_line": 390,
+                "true_branch_start_line": 388
+            },
+            {
+                "condition_end_line": 399,
+                "condition_start_line": 399,
+                "condition_str": "(json->GetType() != rapidjson::kStringType)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 402,
+                "true_branch_start_line": 400
+            },
+            {
+                "condition_end_line": 406,
+                "condition_start_line": 406,
+                "condition_str": "(field->type() == FieldDescriptor::TYPE_BYTES)",
+                "else_branch_end_line": 427,
+                "else_branch_start_line": 417,
+                "true_branch_end_line": 416,
+                "true_branch_start_line": 407
+            },
+            {
+                "condition_end_line": 408,
+                "condition_start_line": 408,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 415,
+                "else_branch_start_line": 412,
+                "true_branch_end_line": 411,
+                "true_branch_start_line": 409
+            },
+            {
+                "condition_end_line": 419,
+                "condition_start_line": 419,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 426,
+                "else_branch_start_line": 423,
+                "true_branch_end_line": 422,
+                "true_branch_start_line": 420
+            },
+            {
+                "condition_end_line": 439,
+                "condition_start_line": 439,
+                "condition_str": "(json->GetType() == rapidjson::kNumberType)",
+                "else_branch_end_line": 448,
+                "else_branch_start_line": 443,
+                "true_branch_end_line": 442,
+                "true_branch_start_line": 440
+            },
+            {
+                "condition_end_line": 443,
+                "condition_start_line": 443,
+                "condition_str": "(json->GetType() == rapidjson::kStringType)",
+                "else_branch_end_line": 448,
+                "else_branch_start_line": 447,
+                "true_branch_end_line": 446,
+                "true_branch_start_line": 444
+            },
+            {
+                "condition_end_line": 449,
+                "condition_start_line": 449,
+                "condition_str": "(!ev)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 450,
+                "true_branch_start_line": 450
+            },
+            {
+                "condition_end_line": 451,
+                "condition_start_line": 451,
+                "condition_str": "(repeated)",
+                "else_branch_end_line": 458,
+                "else_branch_start_line": 455,
+                "true_branch_end_line": 454,
+                "true_branch_start_line": 452
+            }
+        ],
+        "loop_statements": [],
+        "parameters": [
+            [
+                "err",
+                278,
+                3
+            ],
+            [
+                "json",
+                278,
+                0
+            ],
+            [
+                "field",
+                278,
+                2
+            ],
+            [
+                "msg",
+                278,
+                1
+            ]
+        ]
+    },
+    "4": {
+        "function_end_line": 510,
+        "function_id": 4,
+        "function_name": "parse_json",
+        "function_start_line": 467,
+        "if_statements": [
+            {
+                "condition_end_line": 469,
+                "condition_start_line": 469,
+                "condition_str": "(json->GetType() != rapidjson::kObjectType)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 472,
+                "true_branch_start_line": 470
+            },
+            {
+                "condition_end_line": 475,
+                "condition_start_line": 475,
+                "condition_str": "(!d || !ref)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 478,
+                "true_branch_start_line": 476
+            },
+            {
+                "condition_end_line": 483,
+                "condition_start_line": 483,
+                "condition_str": "(!field)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 484,
+                "true_branch_start_line": 484
+            },
+            {
+                "condition_end_line": 485,
+                "condition_start_line": 485,
+                "condition_str": "(!field)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 486,
+                "true_branch_start_line": 486
+            },
+            {
+                "condition_end_line": 487,
+                "condition_start_line": 487,
+                "condition_str": "(field->is_repeated())",
+                "else_branch_end_line": 507,
+                "else_branch_start_line": 500,
+                "true_branch_end_line": 499,
+                "true_branch_start_line": 488
+            },
+            {
+                "condition_end_line": 489,
+                "condition_start_line": 489,
+                "condition_str": "(itr->value.GetType() != rapidjson::kArrayType)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 490,
+                "true_branch_start_line": 490
+            },
+            {
+                "condition_end_line": 494,
+                "condition_start_line": 494,
+                "condition_str": "(ret != 0)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 497,
+                "true_branch_start_line": 495
+            },
+            {
+                "condition_end_line": 503,
+                "condition_start_line": 503,
+                "condition_str": "(ret != 0)",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 506,
+                "true_branch_start_line": 504
+            }
+        ],
+        "loop_statements": [
+            {
+                "header_end_line": 479,
+                "header_start_line": 479,
+                "header_str": "rapidjson::Value::ConstMemberIterator itr = json->MemberBegin(); itr != json->MemberEnd(); ++itr",
+                "loop_body_end_line": 508,
+                "loop_body_start_line": 480,
+                "loop_statement_end_line": 508,
+                "loop_statement_start_line": 479
+            },
+            {
+                "header_end_line": 491,
+                "header_start_line": 491,
+                "header_str": "rapidjson::Value::ConstValueIterator ait = itr->value.Begin(); ait != itr->value.End(); ++ait",
+                "loop_body_end_line": 498,
+                "loop_body_start_line": 492,
+                "loop_statement_end_line": 498,
+                "loop_statement_start_line": 491
+            }
+        ],
+        "parameters": [
+            [
+                "json",
+                467,
+                0
+            ],
+            [
+                "msg",
+                467,
+                1
+            ],
+            [
+                "err",
+                467,
+                2
+            ]
+        ]
+    },
+    "5": {
+        "function_end_line": 518,
+        "function_id": 5,
+        "function_name": "json2string",
+        "function_start_line": 512,
+        "if_statements": [],
+        "loop_statements": [],
+        "parameters": [
+            [
+                "str",
+                512,
+                1
+            ],
+            [
+                "json",
+                512,
+                0
+            ]
+        ]
+    },
+    "6": {
+        "function_end_line": 526,
+        "function_id": 6,
+        "function_name": "pb2json",
+        "function_start_line": 520,
+        "if_statements": [],
+        "loop_statements": [],
+        "parameters": [
+            [
+                "str",
+                520,
+                1
+            ],
+            [
+                "msg",
+                520,
+                0
+            ]
+        ]
+    },
+    "7": {
+        "function_end_line": 532,
+        "function_id": 7,
+        "function_name": "pb2jsonobject",
+        "function_start_line": 528,
+        "if_statements": [],
+        "loop_statements": [],
+        "parameters": [
+            [
+                "msg",
+                528,
+                0
+            ]
+        ]
+    },
+    "8": {
+        "function_end_line": 537,
+        "function_id": 8,
+        "function_name": "pb2jsonobject",
+        "function_start_line": 534,
+        "if_statements": [],
+        "loop_statements": [],
+        "parameters": [
+            [
+                "allocator",
+                534,
+                1
+            ],
+            [
+                "msg",
+                534,
+                0
+            ]
+        ]
+    },
+    "9": {
+        "function_end_line": 549,
+        "function_id": 9,
+        "function_name": "json2pb",
+        "function_start_line": 539,
+        "if_statements": [
+            {
+                "condition_end_line": 543,
+                "condition_start_line": 543,
+                "condition_str": "(d.HasParseError())",
+                "else_branch_end_line": 0,
+                "else_branch_start_line": 0,
+                "true_branch_end_line": 547,
+                "true_branch_start_line": 544
+            }
+        ],
+        "loop_statements": [],
+        "parameters": [
+            [
+                "err",
+                539,
+                2
+            ],
+            [
+                "json",
+                539,
+                0
+            ],
+            [
+                "msg",
+                539,
+                1
+            ]
+        ]
+    },
+    "10": {
+        "function_end_line": 554,
+        "function_id": 10,
+        "function_name": "jsonobject2pb",
+        "function_start_line": 551,
+        "if_statements": [],
+        "loop_statements": [],
+        "parameters": [
+            [
+                "msg",
+                551,
+                1
+            ],
+            [
+                "err",
+                551,
+                2
+            ],
+            [
+                "json",
+                551,
                 0
             ]
         ]

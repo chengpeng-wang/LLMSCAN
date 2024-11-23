@@ -98,10 +98,10 @@ class TSParser:
         Currently, we only handle four languages: C, C++, Java, and Python.
         """
         if self.language_setting in ["C", "C++"]:
-            # function_declarator
-            all_function_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
-            for node in all_function_nodes:
-                all_function_header_nodes.extend(find_all_recursively(node, "function_declarator"))
+            all_function_header_nodes = []
+            all_function_definition_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
+            for function_definition_node in all_function_definition_nodes:
+                all_function_header_nodes.extend(TSAnalyzer.find_nodes_by_type(function_definition_node, "function_declarator"))
         elif self.language_setting in ["Java"]:
             all_function_header_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "method_declaration")
         elif self.language_setting in ["Python"]:
@@ -115,11 +115,29 @@ class TSParser:
                 if sub_node.type == "identifier":
                     function_name = source_code[sub_node.start_byte:sub_node.end_byte]
                     break
+                elif sub_node.type == "qualified_identifier":
+                    qualified_function_name = source_code[sub_node.start_byte:sub_node.end_byte]
+                    function_name = qualified_function_name.split("::")[-1]
 
             if function_name == "":
                 continue
-
+            
             function_node = node.parent if self.language_setting in ["C", "C++"] else node
+
+            if self.language_setting in ["C", "C++"]:
+                is_function_definition = True
+                while True:
+                    if function_node.type == "function_definition":
+                        break
+                    function_node = function_node.parent
+                    if function_node is None:
+                        is_function_definition = False
+                        break
+                    if "statement" in function_node.type:
+                        is_function_definition = False
+                        break
+                if not is_function_definition:
+                    continue
 
             # Initialize the raw data of a function
             start_line_number = source_code[: function_node.start_byte].count("\n") + 1
@@ -201,7 +219,6 @@ class TSAnalyzer:
         for caller_id in self.caller_callee_map:
             for callee_id in self.caller_callee_map[caller_id]:
                 self.call_graph.add_edge(caller_id, callee_id)
-
         return
     
 
@@ -225,6 +242,9 @@ class TSAnalyzer:
         all_call_sites = self.find_nodes_by_type(current_function.parse_tree_root_node, function_call_node_type)
         white_call_sites = []
 
+        file_id = self.ts_parser.functionToFile[current_function.function_id]
+        file_content = self.ts_parser.fileContentDic[file_id]
+        
         # Over-approximate the caller-callee relationship via function names, achieved by find_callee
         for call_site_node in all_call_sites:
             callee_ids = self.find_callee(file_content, call_site_node)
@@ -238,6 +258,7 @@ class TSAnalyzer:
                     if callee_id not in self.callee_caller_map:
                         self.callee_caller_map[callee_id] = set([])
                     self.callee_caller_map[callee_id].add(caller_id)
+                white_call_sites.append(call_site_node)
 
         current_function.call_site_nodes = white_call_sites
 
@@ -245,9 +266,6 @@ class TSAnalyzer:
         current_function.paras = self.find_paras(current_function, file_content)
 
         # Intraprocedural control flow analysis
-        file_id = self.ts_parser.functionToFile[current_function.function_id]
-        file_content = self.ts_parser.fileContentDic[file_id]
-
         current_function.if_statements = self.find_if_statements(
             file_content,
             current_function.parse_tree_root_node,
@@ -257,6 +275,7 @@ class TSAnalyzer:
             file_content,
             current_function.parse_tree_root_node,
         )
+
         return current_function
 
     #################################################
@@ -271,10 +290,19 @@ class TSAnalyzer:
         :param language: the language of the source code
         """
         if language in ["C", "C++", "Java"]:
-            node_types = [sub_node.type for sub_node in node.children]
-            index_of_last_dot = len(node_types) - 1 - node_types[::-1].index(".") if "." in node_types else -1
-            function_name_node = node.children[index_of_last_dot + 1]
-            return source_code[function_name_node.start_byte:function_name_node.end_byte]
+            sub_sub_nodes = []
+            for sub_node in node.children:
+                if sub_node.type == "identifier":
+                    sub_sub_nodes.append(sub_node)
+                else:
+                    for sub_sub_node in sub_node.children:
+                        sub_sub_nodes.append(sub_sub_node)
+                break
+            sub_sub_node_types = [source_code[sub_sub_node.start_byte:sub_sub_node.end_byte] for sub_sub_node in sub_sub_nodes]  
+            index_of_last_dot = len(sub_sub_node_types) - 1 - sub_sub_node_types[::-1].index(".") if "." in sub_sub_node_types else -1
+            index_of_last_arrow = len(sub_sub_node_types) - 1 - sub_sub_node_types[::-1].index("->") if "->" in sub_sub_node_types else -1
+            function_name = sub_sub_node_types[max(index_of_last_dot, index_of_last_arrow) + 1]
+            return function_name
         elif language in ["Python"]:
             for sub_node in node.children:
                 if sub_node.type == "attribute":
@@ -289,10 +317,10 @@ class TSAnalyzer:
         :param file_content: the content of the file
         :param call_site_node: the node of the call site
         """
-        callee_names = self.get_callee_name_at_call_site(call_site_node, file_content, self.ts_parser.language_setting)
+        callee_name = self.get_callee_name_at_call_site(call_site_node, file_content, self.ts_parser.language_setting)
         callee_ids = []
-        if callee_names in self.ts_parser.functionNameToId:
-            callee_ids = list(self.ts_parser.functionNameToId[callee_names])
+        if callee_name in self.ts_parser.functionNameToId:
+            callee_ids.extend(list(self.ts_parser.functionNameToId[callee_name]))
         return callee_ids
 
     #################################################

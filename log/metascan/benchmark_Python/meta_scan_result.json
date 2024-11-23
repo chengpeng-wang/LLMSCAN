@@ -46,14 +46,14 @@
         ],
         "parameters": [
             [
-                "delimiter",
-                3,
-                1
-            ],
-            [
                 "numbers",
                 3,
                 0
+            ],
+            [
+                "delimiter",
+                3,
+                1
             ]
         ]
     }
