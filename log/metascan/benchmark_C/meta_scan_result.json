@@ -37,13 +37,33 @@
         ],
         "parameters": [
             [
+                "k",
+                6,
+                0
+            ],
+            [
                 "symvar",
                 6,
                 1
+            ]
+        ]
+    },
+    "2": {
+        "function_end_line": 7,
+        "function_id": 2,
+        "function_name": "add",
+        "function_start_line": 5,
+        "if_statements": [],
+        "loop_statements": [],
+        "parameters": [
+            [
+                "b",
+                5,
+                1
             ],
             [
-                "k",
-                6,
+                "a",
+                5,
                 0
             ]
         ]

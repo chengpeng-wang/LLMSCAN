@@ -102,11 +102,6 @@ class TSParser:
             all_function_definition_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
             for function_definition_node in all_function_definition_nodes:
                 all_function_header_nodes.extend(TSAnalyzer.find_nodes_by_type(function_definition_node, "function_declarator"))
-
-            # for function_definitino_node in all_function_definition_nodes:
-            #     for sub_node in function_definitino_node.children:
-            #         if sub_node.type == "function_declarator":
-            #             all_function_header_nodes.append(sub_node)
         elif self.language_setting in ["Java"]:
             all_function_header_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "method_declaration")
         elif self.language_setting in ["Python"]:

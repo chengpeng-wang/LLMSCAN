@@ -22,7 +22,7 @@ def find_nodes(root_node: tree_sitter.Node, node_type: str) -> List[tree_sitter.
     return nodes
 
 # Read the Java file
-with open("../benchmark/C/demo/01.c", "r") as file:
+with open("../benchmark/C/demo/01.h", "r") as file:
     source_code = file.read()
 
 # Parse the Java code
@@ -31,8 +31,8 @@ tree = parser.parse(bytes(source_code, "utf8"))
 root = tree.root_node
 functions = {}
 
-nodes = find_nodes(root, "pointer_declarator")
+nodes = find_nodes(root, "function_declarator")
 
 for node in nodes:
     for child in node.children:
-        print(child.type)
+        print(source_code[child.start_byte:child.end_byte])
