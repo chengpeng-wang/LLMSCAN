@@ -174,7 +174,7 @@ class TSParser:
 
 class TSAnalyzer:
     """
-    TSAnalyzer class for retrieving necessary facts or functions for LMAgent
+    TSAnalyzer class for retrieving necessary facts or functions
     """
 
     def __init__(
