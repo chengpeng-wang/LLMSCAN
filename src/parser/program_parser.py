@@ -13,7 +13,6 @@ import networkx as nx
 sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
 
 from typing import List, Tuple, Dict
-from parser.ts_utils import *
 
 
 class Function:
