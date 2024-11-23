@@ -2,7 +2,6 @@ import json
 import os
 from parser.response_parser import *
 from parser.program_parser import *
-from prompt.apiscan_prompt import *
 from model.llm import *
 from pathlib import Path
 
