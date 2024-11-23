@@ -13,7 +13,6 @@ import networkx as nx
 sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
 
 from typing import List, Tuple, Dict
-from parser.ts_utils import *
 
 
 class Function:
@@ -73,15 +72,7 @@ class TSParser:
         self.parser = tree_sitter.Parser()
 
         # initilize the language according to language_setting
-        if language_setting == "C":
-            self.language = Language(str(language_path), "c")
-        elif language_setting == "C++":
-            self.language = Language(str(language_path), "cpp")
-        elif language_setting == "Java":
-            self.language = Language(str(language_path), "java")
-        elif language_setting == "Python":
-            self.language = Language(str(language_path), "python")
-
+        self.language = Language(str(language_path), "python")
         self.parser.set_language(self.language)
 
 
@@ -92,22 +83,7 @@ class TSParser:
         :param source_code: The content of the source file.
         :param tree: The parse tree of the source file.
         """
-        all_function_header_nodes = []
-
-        """
-        Currently, we only handle four languages: C, C++, Java, and Python.
-        """
-        if self.language_setting in ["C", "C++"]:
-            all_function_header_nodes = []
-            all_function_definition_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
-            for function_definition_node in all_function_definition_nodes:
-                all_function_header_nodes.extend(TSAnalyzer.find_nodes_by_type(function_definition_node, "function_declarator"))
-        elif self.language_setting in ["Java"]:
-            all_function_header_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "method_declaration")
-        elif self.language_setting in ["Python"]:
-            all_function_header_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
-        else:
-            assert "Wrong language setting"                 
+        all_function_header_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")               
     
         for node in all_function_header_nodes:
             function_name = ""
@@ -121,34 +97,32 @@ class TSParser:
 
             if function_name == "":
                 continue
-            
-            function_node = node.parent if self.language_setting in ["C", "C++"] else node
 
             if self.language_setting in ["C", "C++"]:
                 is_function_definition = True
                 while True:
-                    if function_node.type == "function_definition":
+                    if node.type == "function_definition":
                         break
-                    function_node = function_node.parent
-                    if function_node is None:
+                    node = node.parent
+                    if node is None:
                         is_function_definition = False
                         break
-                    if "statement" in function_node.type:
+                    if "statement" in node.type:
                         is_function_definition = False
                         break
                 if not is_function_definition:
                     continue
 
             # Initialize the raw data of a function
-            start_line_number = source_code[: function_node.start_byte].count("\n") + 1
-            end_line_number = source_code[: function_node.end_byte].count("\n") + 1
+            start_line_number = source_code[: node.start_byte].count("\n") + 1
+            end_line_number = source_code[: node.end_byte].count("\n") + 1
             function_id = len(self.functionRawDataDic) + 1
             
             self.functionRawDataDic[function_id] = (
                 function_name,
                 start_line_number,
                 end_line_number,
-                function_node
+                node
             )
             self.functionToFile[function_id] = file_path
             
@@ -231,13 +205,7 @@ class TSAnalyzer:
         :param file_content: the content of the file
         """
         # Identify call site info and maintain the environment
-        function_call_node_type = ""
-        if self.ts_parser.language_setting in ["C", "C++"]:
-            function_call_node_type = "call_expression"
-        elif self.ts_parser.language_setting in ["Java"]:
-            function_call_node_type = "method_invocation"
-        elif self.ts_parser.language_setting in ["Python"]:
-            function_call_node_type = "call"
+        function_call_node_type = "call"
 
         all_call_sites = self.find_nodes_by_type(current_function.parse_tree_root_node, function_call_node_type)
         white_call_sites = []
@@ -281,6 +249,7 @@ class TSAnalyzer:
     #################################################
     ########## Call Graph Analysis ##################
     #################################################
+    
     @staticmethod
     def get_callee_name_at_call_site(node: tree_sitter.Node, source_code: str, language: str) -> str:
         """
@@ -289,26 +258,11 @@ class TSAnalyzer:
         :param source_code: the content of the file
         :param language: the language of the source code
         """
-        if language in ["C", "C++", "Java"]:
-            sub_sub_nodes = []
-            for sub_node in node.children:
-                if sub_node.type == "identifier":
-                    sub_sub_nodes.append(sub_node)
-                else:
-                    for sub_sub_node in sub_node.children:
-                        sub_sub_nodes.append(sub_sub_node)
-                break
-            sub_sub_node_types = [source_code[sub_sub_node.start_byte:sub_sub_node.end_byte] for sub_sub_node in sub_sub_nodes]  
-            index_of_last_dot = len(sub_sub_node_types) - 1 - sub_sub_node_types[::-1].index(".") if "." in sub_sub_node_types else -1
-            index_of_last_arrow = len(sub_sub_node_types) - 1 - sub_sub_node_types[::-1].index("->") if "->" in sub_sub_node_types else -1
-            function_name = sub_sub_node_types[max(index_of_last_dot, index_of_last_arrow) + 1]
-            return function_name
-        elif language in ["Python"]:
-            for sub_node in node.children:
-                if sub_node.type == "attribute":
-                    for sub_sub_node in reversed(sub_node.children):
-                        if sub_sub_node.type == "identifier":
-                            return source_code[sub_sub_node.start_byte:sub_sub_node.end_byte]
+        for sub_node in node.children:
+            if sub_node.type == "attribute":
+                for sub_sub_node in reversed(sub_node.children):
+                    if sub_sub_node.type == "identifier":
+                        return source_code[sub_sub_node.start_byte:sub_sub_node.end_byte]
         return ""
     
     def find_callee(self, file_content: str, call_site_node: tree_sitter.Node) -> List[int]:
@@ -325,53 +279,9 @@ class TSAnalyzer:
 
     #################################################
     ########## AST Node Type Analysis ###############
-    #################################################   
-
-    # The following three versions para-extraction functions may be verbose and redundant
-    # However, we keep them as they may need to be extended for more complex cases separately in the future
+    #################################################  
 
     def find_paras(self, current_function: Function, file_content: str) -> Set[Tuple[str, int, int]]:
-        """
-        Find the parameters in the function.
-        :param file_content: the content of the file
-        :param node: the node of the function
-        """
-        if self.ts_parser.language_setting in ["C", "C++"]:
-            return self.extract_paras_in_C_CPP(current_function, file_content)
-        elif self.ts_parser.language_setting in ["Java"]:
-            return self.extract_paras_in_Java(current_function, file_content)
-        elif self.ts_parser.language_setting in ["Python"]:
-            return self.extract_paras_in_Python(current_function, file_content)
-        return set([])
-
-
-    def extract_paras_in_C_CPP(self, current_function: Function, file_content: str) -> Set[Tuple[str, int, int]]:
-        paras = set([])
-        parameters = self.find_nodes_by_type(current_function.parse_tree_root_node, "parameter_declaration")
-        index = 0
-        for parameter_node in parameters:
-            for sub_node in TSAnalyzer.find_nodes_by_type(parameter_node, "identifier"):                
-                parameter_name = file_content[sub_node.start_byte:sub_node.end_byte]
-                line_number = file_content[:sub_node.start_byte].count("\n") + 1
-                paras.add((parameter_name, line_number, index))
-                index += 1
-        return paras
-
-
-    def extract_paras_in_Java(self, current_function: Function, file_content: str) -> Set[Tuple[str, int, int]]:
-        paras = set([])
-        parameters = self.find_nodes_by_type(current_function.parse_tree_root_node, "formal_parameter")
-        index = 0
-        for parameter_node in parameters:
-            for sub_node in TSAnalyzer.find_nodes_by_type(parameter_node, "identifier"):                
-                parameter_name = file_content[sub_node.start_byte:sub_node.end_byte]
-                line_number = file_content[:sub_node.start_byte].count("\n") + 1
-                paras.add((parameter_name, line_number, index))
-                index += 1
-        return paras
-    
-
-    def extract_paras_in_Python(self, current_function: Function, file_content: str) -> Set[Tuple[str, int, int]]:
         paras = set([])
         parameters = self.find_nodes_by_type(current_function.parse_tree_root_node, "parameters")
         index = 0
@@ -394,133 +304,8 @@ class TSAnalyzer:
     ########## Control Flow Analysis ################
     #################################################
 
-    # The following three versions if-statement meta-data extraction functions may be verbose and redundant
-    # However, we keep them as they may need to be extended for more complex cases separately in the future
-
     @staticmethod
-    def extract_meta_data_of_Java_if_statements(source_code, root_node) -> Dict[Tuple, Tuple]:
-        """
-        Extract meta data of if statements in Java
-        """
-        if_statement_nodes = TSAnalyzer.find_nodes_by_type(root_node, "if_statement")
-        if_statements = {}
-
-        for if_statement_node in if_statement_nodes:
-            condition_str = ""
-            condition_start_line = 0
-            condition_end_line = 0
-            true_branch_start_line = 0
-            true_branch_end_line = 0
-            else_branch_start_line = 0
-            else_branch_end_line = 0
-
-            block_num = 0
-            for sub_target in if_statement_node.children:
-                if sub_target.type == "parenthesized_expression":
-                    condition_start_line = (
-                        source_code[: sub_target.start_byte].count("\n") + 1
-                    )
-                    condition_end_line = (
-                        source_code[: sub_target.end_byte].count("\n") + 1
-                    )
-                    condition_str = source_code[
-                        sub_target.start_byte : sub_target.end_byte
-                    ]
-                if sub_target.type == "block":
-                    lower_lines = []
-                    upper_lines = []
-                    for sub_sub_target in sub_target.children:
-                        if sub_sub_target.type not in {"{", "}"}:
-                            lower_lines.append(source_code[: sub_sub_target.start_byte].count("\n") + 1)
-                            upper_lines.append(source_code[: sub_sub_target.end_byte].count("\n") + 1)
-                    if len(upper_lines) == 0 or len(lower_lines) == 0:
-                        continue
-                    
-                    if block_num == 0:
-                        true_branch_start_line = min(lower_lines)
-                        true_branch_end_line = max(upper_lines)
-                        block_num += 1
-                    elif block_num == 1:
-                        else_branch_start_line = min(lower_lines)
-                        else_branch_end_line = max(upper_lines)
-                        block_num += 1
-                if sub_target.type == "expression_statement":
-                    true_branch_start_line = source_code[: sub_target.start_byte].count("\n") + 1
-                    true_branch_end_line = source_code[: sub_target.end_byte].count("\n") + 1
-                    
-            if_statement_start_line = source_code[: if_statement_node.start_byte].count("\n") + 1
-            if_statement_end_line = source_code[: if_statement_node.end_byte].count("\n") + 1
-            line_scope = (if_statement_start_line, if_statement_end_line)
-            info = (
-                        condition_start_line,
-                        condition_end_line,
-                        condition_str,
-                        (true_branch_start_line, true_branch_end_line),
-                        (else_branch_start_line, else_branch_end_line),
-                    )
-            if_statements[line_scope] = info 
-        return if_statements
-    
-
-    @staticmethod
-    def extract_meta_data_of_C_CPP_if_statements(source_code, root_node) -> Dict[Tuple, Tuple]:
-        """
-        Extract meta data of if statements in C/C++
-        """
-        if_statement_nodes = TSAnalyzer.find_nodes_by_type(root_node, "if_statement")
-        if_statements = {}
-
-        for if_statement_node in if_statement_nodes:
-            condition_str = ""
-            condition_start_line = 0
-            condition_end_line = 0
-            true_branch_start_line = 0
-            true_branch_end_line = 0
-            else_branch_start_line = 0
-            else_branch_end_line = 0
-
-            for sub_target in if_statement_node.children:
-                if sub_target.type in ["parenthesized_expression", "condition_clause"]:
-                    condition_start_line = (
-                        source_code[: sub_target.start_byte].count("\n") + 1
-                    )
-                    condition_end_line = (
-                        source_code[: sub_target.end_byte].count("\n") + 1
-                    )
-                    condition_str = source_code[
-                        sub_target.start_byte : sub_target.end_byte
-                    ]
-                if "statement" in sub_target.type:
-                    true_branch_start_line = (
-                        source_code[: sub_target.start_byte].count("\n") + 1
-                    )
-                    true_branch_end_line = (
-                        source_code[: sub_target.end_byte].count("\n") + 1
-                    )
-                if sub_target.type == "else_clause":
-                    else_branch_start_line = (
-                        source_code[: sub_target.start_byte].count("\n") + 1
-                    )
-                    else_branch_end_line = (
-                        source_code[: sub_target.end_byte].count("\n") + 1
-                    )
-
-            if_statement_start_line = source_code[: if_statement_node.start_byte].count("\n") + 1
-            if_statement_end_line = source_code[: if_statement_node.end_byte].count("\n") + 1
-            line_scope = (if_statement_start_line, if_statement_end_line)
-            info = (
-                condition_start_line,
-                condition_end_line,
-                condition_str,
-                (true_branch_start_line, true_branch_end_line),
-                (else_branch_start_line, else_branch_end_line),
-            )
-            if_statements[line_scope] = info
-        return if_statements
-    
-
-    @staticmethod
-    def extract_meta_data_of_Python_if_statements(source_code, root_node) -> Dict[Tuple, Tuple]:
+    def find_if_statements(source_code, root_node) -> Dict[Tuple, Tuple]:
         """
         Extract meta data of if statements in Python
         TODO: Current implementation only extract the condition of if-statements
@@ -557,187 +342,9 @@ class TSAnalyzer:
             )
             if_statements[line_scope] = info
         return if_statements
-                
-
-    def find_if_statements(self, source_code, root_node) -> Dict[Tuple, Tuple]:
-        """
-        Find all the if statements in the function
-        :param source_code: the content of the function
-        :param root_node: the root node of the parse tree
-        """
-        if self.ts_parser.language_setting in ["C", "C++"]:
-            return self.extract_meta_data_of_C_CPP_if_statements(source_code, root_node)
-        elif self.ts_parser.language_setting in ["Java"]:
-            return self.extract_meta_data_of_Java_if_statements(source_code, root_node)
-        elif self.ts_parser.language_setting in ["Python"]:
-            return self.extract_meta_data_of_Python_if_statements(source_code, root_node)
-
-
+              
     @staticmethod
-    def extract_meta_data_of_Java_loop_statements(source_code, root_node) -> Dict[Tuple, Tuple]:
-        loop_statements = {}
-        for_statement_nodes = TSAnalyzer.find_nodes_by_type(root_node, "for_statement")
-        for_statement_nodes.extend(TSAnalyzer.find_nodes_by_type(root_node, "enhanced_for_statement"))
-        while_statement_nodes = TSAnalyzer.find_nodes_by_type(root_node, "while_statement")
-
-        for loop_node in for_statement_nodes:
-            loop_start_line = source_code[: loop_node.start_byte].count("\n") + 1
-            loop_end_line = source_code[: loop_node.end_byte].count("\n") + 1
-
-            header_line_start = 0
-            header_line_end = 0
-            header_str = ""
-            loop_body_start_line = 0
-            loop_body_end_line = 0
-
-            header_start_byte = 0
-            header_end_byte = 0
-
-            for loop_child_node in loop_node.children:
-                if loop_child_node.type == "(":
-                    header_line_start = source_code[: loop_child_node.start_byte].count("\n") + 1
-                    header_start_byte = loop_child_node.end_byte
-                if loop_child_node.type == ")":
-                    header_line_end = source_code[: loop_child_node.end_byte].count("\n") + 1
-                    header_end_byte = loop_child_node.start_byte
-                    header_str = source_code[header_start_byte: header_end_byte]
-                if loop_child_node.type == "block":
-                    lower_lines = []
-                    upper_lines = []
-                    for loop_child_child_node in loop_child_node.children:
-                        if loop_child_child_node.type not in {"{", "}"}:
-                            lower_lines.append(source_code[: loop_child_child_node.start_byte].count("\n") + 1)
-                            upper_lines.append(source_code[: loop_child_child_node.end_byte].count("\n") + 1)
-                    loop_body_start_line = min(lower_lines)
-                    loop_body_end_line = max(upper_lines)
-                if loop_child_node.type == "expression_statement":
-                    loop_body_start_line = source_code[: loop_child_node.start_byte].count("\n") + 1
-                    loop_body_end_line = source_code[: loop_child_node.end_byte].count("\n") + 1
-            loop_statements[(loop_start_line, loop_end_line)] = (
-                header_line_start,
-                header_line_end,
-                header_str,
-                loop_body_start_line,
-                loop_body_end_line,
-            )
-
-        for loop_node in while_statement_nodes:
-            loop_start_line = source_code[: loop_node.start_byte].count("\n") + 1
-            loop_end_line = source_code[: loop_node.end_byte].count("\n") + 1
-
-            header_line_start = 0
-            header_line_end = 0
-            header_str = ""
-            loop_body_start_line = 0
-            loop_body_end_line = 0
-
-            for loop_child_node in loop_node.children:
-                if loop_child_node.type == "parenthesized_expression":
-                    header_line_start = source_code[: loop_child_node.start_byte].count("\n") + 1
-                    header_line_end = source_code[: loop_child_node.end_byte].count("\n") + 1
-                    header_str = source_code[loop_child_node.start_byte: loop_child_node.end_byte]
-                if loop_child_node.type == "block":
-                    lower_lines = []
-                    upper_lines = []
-                    for loop_child_child_node in loop_child_node.children:
-                        if loop_child_child_node.type not in {"{", "}"}:
-                            lower_lines.append(source_code[: loop_child_child_node.start_byte].count("\n") + 1)
-                            upper_lines.append(source_code[: loop_child_child_node.end_byte].count("\n") + 1)
-                    loop_body_start_line = min(lower_lines)
-                    loop_body_end_line = max(upper_lines)
-            loop_statements[(loop_start_line, loop_end_line)] = (
-                header_line_start,
-                header_line_end,
-                header_str,
-                loop_body_start_line,
-                loop_body_end_line,
-            )
-        return loop_statements
-
-
-    @staticmethod
-    def extract_meta_data_of_C_CPP_while_statements(source_code, root_node) -> Dict[Tuple, Tuple]:
-        loop_statements = {}
-        for_statement_nodes = TSAnalyzer.find_nodes_by_type(root_node, "for_statement")
-        while_statement_nodes = TSAnalyzer.find_nodes_by_type(root_node, "while_statement")
-
-        for loop_node in for_statement_nodes:
-            loop_start_line = source_code[: loop_node.start_byte].count("\n") + 1
-            loop_end_line = source_code[: loop_node.end_byte].count("\n") + 1
-
-            header_line_start = 0
-            header_line_end = 0
-            header_str = ""
-            loop_body_start_line = 0
-            loop_body_end_line = 0
-
-            header_start_byte = 0
-            header_end_byte = 0
-
-            for loop_child_node in loop_node.children:
-                if loop_child_node.type == "(":
-                    header_line_start = source_code[: loop_child_node.start_byte].count("\n") + 1
-                    header_start_byte = loop_child_node.end_byte
-                if loop_child_node.type == ")":
-                    header_line_end = source_code[: loop_child_node.end_byte].count("\n") + 1
-                    header_end_byte = loop_child_node.start_byte
-                    header_str = source_code[header_start_byte: header_end_byte]
-                if loop_child_node.type == "block":
-                    lower_lines = []
-                    upper_lines = []
-                    for loop_child_child_node in loop_child_node.children:
-                        if loop_child_child_node.type not in {"{", "}"}:
-                            lower_lines.append(source_code[: loop_child_child_node.start_byte].count("\n") + 1)
-                            upper_lines.append(source_code[: loop_child_child_node.end_byte].count("\n") + 1)
-                    loop_body_start_line = min(lower_lines)
-                    loop_body_end_line = max(upper_lines)
-                if "statement" in loop_child_node.type:
-                    loop_body_start_line = source_code[: loop_child_node.start_byte].count("\n") + 1
-                    loop_body_end_line = source_code[: loop_child_node.end_byte].count("\n") + 1
-            loop_statements[(loop_start_line, loop_end_line)] = (
-                header_line_start,
-                header_line_end,
-                header_str,
-                loop_body_start_line,
-                loop_body_end_line,
-            )
-
-        for loop_node in while_statement_nodes:
-            loop_start_line = source_code[: loop_node.start_byte].count("\n") + 1
-            loop_end_line = source_code[: loop_node.end_byte].count("\n") + 1
-
-            header_line_start = 0
-            header_line_end = 0
-            header_str = ""
-            loop_body_start_line = 0
-            loop_body_end_line = 0
-
-            for loop_child_node in loop_node.children:
-                if loop_child_node.type == "parenthesized_expression":
-                    header_line_start = source_code[: loop_child_node.start_byte].count("\n") + 1
-                    header_line_end = source_code[: loop_child_node.end_byte].count("\n") + 1
-                    header_str = source_code[loop_child_node.start_byte: loop_child_node.end_byte]
-                if "statement" in loop_child_node.type:
-                    lower_lines = []
-                    upper_lines = []
-                    for loop_child_child_node in loop_child_node.children:
-                        if loop_child_child_node.type not in {"{", "}"}:
-                            lower_lines.append(source_code[: loop_child_child_node.start_byte].count("\n") + 1)
-                            upper_lines.append(source_code[: loop_child_child_node.end_byte].count("\n") + 1)
-                    loop_body_start_line = min(lower_lines)
-                    loop_body_end_line = max(upper_lines)
-            loop_statements[(loop_start_line, loop_end_line)] = (
-                header_line_start,
-                header_line_end,
-                header_str,
-                loop_body_start_line,
-                loop_body_end_line,
-            )
-        return loop_statements
-    
-
-    @staticmethod
-    def extract_meta_data_of_Python_loop_statements(source_code, root_node) -> Dict[Tuple, Tuple]:
+    def find_loop_statements(source_code, root_node) -> Dict[Tuple, Tuple]:
         loop_statements = {}
         loop_nodes = TSAnalyzer.find_nodes_by_type(root_node, "for_statement")
         loop_nodes.extend(TSAnalyzer.find_nodes_by_type(root_node, "while_statement"))
@@ -769,21 +376,6 @@ class TSAnalyzer:
                 loop_body_end_line
             )
         return loop_statements
-    
-
-    def find_loop_statements(self, source_code, root_node) -> Dict[Tuple, Tuple]:
-        """
-        Find all the loop statements in the function
-        :param source_code: the content of the function
-        :param root_node: the root node of the parse tree
-        """
-        if self.ts_parser.language_setting in ["C", "C++"]:
-            return self.extract_meta_data_of_C_CPP_while_statements(source_code, root_node)
-        elif self.ts_parser.language_setting in ["Java"]:
-            return self.extract_meta_data_of_Java_loop_statements(source_code, root_node)
-        elif self.ts_parser.language_setting in ["Python"]:
-            return self.extract_meta_data_of_Python_loop_statements(source_code, root_node)
-
 
     #################################################
     ########## AST visitor utility ##################
