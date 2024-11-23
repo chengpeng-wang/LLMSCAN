@@ -2,7 +2,6 @@ import os
 import argparse
 import glob
 from model.utils import *
-from pipeline.apiscan import *
 from pipeline.metascan import *
 
 class BatchScan:
@@ -41,17 +40,6 @@ class BatchScan:
         Start the batch scan process.
         """
         project_name = self.project_path.split("/")[-2] + "_" + self.project_path.split("/")[-1]
-
-        if "apiscan" in self.scanners:
-            apiscan_pipeline = APIScanPipeline(
-                project_name,
-                self.language,
-                self.all_files,
-                self.inference_model_name,
-                self.inference_key_str,
-                self.temperature
-            )
-            apiscan_pipeline.start_scan()
 
         if "metascan" in self.scanners:
             metascan_pipeline = MetaScanPipeline(
@@ -109,7 +97,7 @@ def run_dev_mode():
     parser.add_argument(
         "--scanners",
         nargs='+',
-        choices=["apiscan", "metascan"],
+        choices=["metascan"],
         help="Specify which scanners to invoke",
     )
 
