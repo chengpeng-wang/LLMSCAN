@@ -28,16 +28,9 @@ class BatchScan:
         self.temperature = temperature
         self.batch_scan_statistics = {}
 
-        suffixs = []
-        if self.language == "C":
-            suffixs = ["c", "h"]
-        elif self.language == "C++":
-            suffixs = ["cpp", "cc", "hpp", "c", "h"]
-        elif self.language == "Java":
-            suffixs = ["java"]
-        elif self.language == "Python":
-            suffixs = ["py"]
-        
+        assert self.language == "Java"
+        suffixs = ["java"]
+
         # Load all files with the specified suffix in the project path
         self.travese_files(project_path, suffixs)
 
@@ -95,10 +88,7 @@ def run_dev_mode():
     parser.add_argument(
         "--language",
         choices=[
-            "C",
-            "C++",
-            "Java",
-            "Python"
+            "Java"
         ],
         help="Specify the language",
     )
