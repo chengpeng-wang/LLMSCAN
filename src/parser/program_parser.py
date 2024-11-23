@@ -88,14 +88,9 @@ class TSParser:
         :param tree: The parse tree of the source file.
         """
         all_function_header_nodes = []
-
-        if self.language_setting in ["C", "C++"]:
-            all_function_header_nodes = []
-            all_function_definition_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
-            for function_definition_node in all_function_definition_nodes:
-                all_function_header_nodes.extend(TSAnalyzer.find_nodes_by_type(function_definition_node, "function_declarator"))
-        else:
-            assert "We only analyze C/C++ programs"                 
+        all_function_definition_nodes = TSAnalyzer.find_nodes_by_type(tree.root_node, "function_definition")
+        for function_definition_node in all_function_definition_nodes:
+            all_function_header_nodes.extend(TSAnalyzer.find_nodes_by_type(function_definition_node, "function_declarator"))              
     
         for node in all_function_header_nodes:
             function_name = ""
