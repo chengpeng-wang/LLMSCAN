@@ -11,10 +11,11 @@ LLMSCAN is a tool designed to parse and analyze source code to instantiate LLM-b
 - Browse code for prompting-based static analysis.
 - Multi-linguistic support.
 
-## Functionalities
+## Functionality
 
-- APIScan: Search all the call sites of specific APIs
 - MetaScan: Extract syntactic facts as function metadata.
+
+You can define your own scanners in the directory `src/pipeline`.
 
 ## Installation
 
@@ -56,27 +57,21 @@ LLMSCAN is a tool designed to parse and analyze source code to instantiate LLM-b
     git clone git@github.com:torvalds/linux.git
     ```
 
-2. Run the analysis to detect the misuse of `mhi_alloc_controller`:
+    You can also use our provided benchmark programs to run a demo.
+
+2. Run the analysis to extract the meta data of each function:
     ```sh
     cd src
     ./run.sh
     ```
 
-The output files are dumped in the directory `log`, including the bug reports (in `detect_result.json`) and analyzed functions (in `probe_scope.json`).
+The output files are dumped in the directory `log`.
 
 ## How to Extend
 
 ### More Program Facts
 
-You can implement your own analysis by adding more modules, such as more parsing-based primitives (in `parser/program_parser`). If you want to derive semantic facts, which may be beyond the capability of parsing-based analysis, you can customize the prompts (in `prompt/apiscan_prompt.py` or other user-defined prompt files) and leverage LLMs to derive them in a neural manner.
-
-### More Bug Types
-
-As a simple demo, we only concentrate on API misuse detection and show three misuse patterns in `prompt/apiscan_prompt.py`. In particular, we only analyze the misuse of `mhi_alloc_controller`. You can comment or delete the following code snippet in `pipeline/apiscan.py` to analyze the other two API misuses:
-```python
-if sensitive_function != "mhi_alloc_controller":
-    continue
-```
+You can implement your own analysis by adding more modules, such as more parsing-based primitives (in `parser/program_parser`). If you want to derive semantic facts, which may be beyond the capability of parsing-based analysis, you can customize the prompts and leverage LLMs to derive them in a neural manner.
 
 ### More Programming Languages
 
